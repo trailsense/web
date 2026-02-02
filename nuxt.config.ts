@@ -7,6 +7,8 @@ export default defineNuxtConfig({
     '@pinia/nuxt'
   ],
 
+  ssr: false,
+
   devtools: {
     enabled: true
   },
@@ -26,5 +28,9 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+
+  maplibre: {
+    css: false
   }
 })
