@@ -31,6 +31,6 @@ export default defineNuxtConfig({
   },
 
   maplibre: {
-    css: false
+    css: true
   }
 })
