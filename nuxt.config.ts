@@ -28,9 +28,5 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
-  },
-
-  maplibre: {
-    css: true
   }
 })
