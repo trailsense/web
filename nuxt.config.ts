@@ -7,6 +7,8 @@ export default defineNuxtConfig({
     '@pinia/nuxt'
   ],
 
+  ssr: false,
+
   devtools: {
     enabled: true
   },
