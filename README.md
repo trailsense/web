@@ -33,3 +33,16 @@ npm preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Uncloud
+
+1. Copy `.env.production.example` to `.env.production` and fill values.
+2. Deploy with:
+
+```bash
+mise run deploy
+```
+
+Notes:
+- `NUXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is the only Clerk key needed for this client-side build.
+- `EXPOSE 3000` in the Dockerfile is documentation; runtime port comes from `NITRO_PORT`.

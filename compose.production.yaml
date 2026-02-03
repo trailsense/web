@@ -1,0 +1,14 @@
+name: trailsense-web-production
+
+services:
+  trailsense-web-app:
+    build:
+      context: .
+    image: trailsense-web:latest
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+    env_file:
+      - .env.production
+    x-ports:
+      - "${APP_DOMAIN:?APP_DOMAIN must be set}:${NITRO_PORT:-3000}/https"

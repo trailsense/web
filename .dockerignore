@@ -1,0 +1,9 @@
+.git
+.gitignore
+.nuxt
+node_modules
+npm-debug.log
+.DS_Store
+.env
+.env.production
+.env.*
