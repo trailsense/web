@@ -4,9 +4,6 @@ services:
   trailsense-web-app:
     build:
       context: .
-      args:
-        - NUXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-        - NUXT_CLERK_SECRET_KEY
     image: trailsense-web:latest
     restart: unless-stopped
     deploy:
