@@ -33,3 +33,12 @@ npm preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Uncloud
+
+1. Copy `.env.production.example` to `.env.production` and fill values.
+2. Deploy with:
+
+```bash
+mise run deploy
+```
