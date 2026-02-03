@@ -6,9 +6,9 @@ definePageMeta({
 
 <template>
   <div class="min-h-dvh flex items-center-safe justify-center-safe">
-    <SignIn
+    <SignUp
       routing="hash"
-      sign-up-url="/signup"
+      sign-in-url="/login"
     />
   </div>
 </template>

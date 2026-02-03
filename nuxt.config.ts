@@ -1,10 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
     'nuxt-maplibre',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@clerk/nuxt'
   ],
 
   ssr: false,
@@ -14,6 +16,9 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
+  ui: {
+    colorMode: false
+  },
 
   routeRules: {
     '/': { prerender: true }
