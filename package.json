@@ -10,6 +10,7 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@clerk/nuxt": "^1.13.17",
     "@iconify-json/lucide": "^1.2.87",
     "@nuxt/ui": "^4.4.0",
     "@pinia/colada-nuxt": "^0.3.1",
