@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     'nuxt-maplibre',
     '@pinia/nuxt',
+    '@pinia/colada-nuxt',
     '@clerk/nuxt'
   ],
 
@@ -16,11 +17,16 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
+
   ui: {
     colorMode: false
   },
 
   compatibilityDate: '2025-01-15',
+
+  clerk: {
+    skipServerMiddleware: true
+  },
 
   eslint: {
     config: {

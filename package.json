@@ -6,6 +6,7 @@
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "generate:api": "openapi-ts",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck"
   },
@@ -21,6 +22,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.91.1",
     "@nuxt/eslint": "^1.13.0",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
