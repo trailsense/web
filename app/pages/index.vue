@@ -1,5 +1,5 @@
 <template>
-  <Map :nodes="nodes" />
+  <MapView :nodes="nodes" />
 </template>
 
 <script setup>
