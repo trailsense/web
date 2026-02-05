@@ -9,6 +9,7 @@
         v-for="node in nodes"
         :key="node.id"
         :node="node"
+        @select="$emit('select', node)"
       />
     </div>
   </div>
@@ -19,5 +20,9 @@ import type { TrailNode } from '~/data/mockNodes'
 
 defineProps<{
   nodes: TrailNode[]
+}>()
+
+defineEmits<{
+  (e: 'select', node: TrailNode): void
 }>()
 </script>

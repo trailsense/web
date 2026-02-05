@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { mockNodes } from '~/data/mockNodes'
+import { mockNodes, type TrailNode } from '~/data/mockNodes'
+
+const selectedNode = ref<TrailNode | null>(null)
 </script>
 
 <template>
@@ -16,7 +18,17 @@ import { mockNodes } from '~/data/mockNodes'
         />
       </template>
 
-      <NodeSidebarList :nodes="mockNodes" />
+      <NodeSidebarList
+        v-if="!selectedNode"
+        :nodes="mockNodes"
+        @select="selectedNode = $event"
+      />
+
+      <NodeSidebarDetails
+        v-else
+        :node="selectedNode"
+        @back="selectedNode = null"
+      />
 
       <template #footer="{ collapsed }">
         <div class="w-full">
