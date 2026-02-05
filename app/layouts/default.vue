@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { mockNodes, type TrailNode } from '~/data/mockNodes'
 
-const selectedNode = ref<TrailNode | null>(null)
+const selectedNode = useState<TrailNode | null>('selectedNode', () => null)
 </script>
 
 <template>
