@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { mockNodes, type TrailNode } from '~/data/mockNodes'
+
+const selectedNode = useState<TrailNode | null>('selectedNode', () => null)
 </script>
 
 <template>
@@ -14,6 +17,19 @@
           class="h-8 w-auto shrink-0"
         />
       </template>
+
+      <NodeSidebarList
+        v-if="!selectedNode"
+        :nodes="mockNodes"
+        @select="selectedNode = $event"
+      />
+
+      <NodeSidebarDetails
+        v-else
+        :node="selectedNode"
+        @back="selectedNode = null"
+      />
+
       <template #footer="{ collapsed }">
         <div class="w-full">
           <SignedIn>
