@@ -1,39 +1,49 @@
+export type NodeStatus = 'active' | 'inactive' | 'syncing'
+
 export type TrailNode = {
   id: string
   name: string
+  region: string
   coordinates: [number, number]
-  intensity: number
+  trails: string[]
+  status: NodeStatus
+  lastSynchronized: string
+  lastMaintenance: string
+  setupDate: string
 }
 
 export const mockNodes: TrailNode[] = [
   {
-    id: 'node-innsbruck-centre',
-    name: 'Innsbruck City Centre',
-    coordinates: [11.39454, 47.26266],
-    intensity: 0.4
-  },
-  {
-    id: 'node-patscherkofel-base',
-    name: 'Patscherkofel Cable Car Base (Igls)',
-    coordinates: [11.4272, 47.22226],
-    intensity: 0.7
-  },
-  {
-    id: 'node-hozler-alm',
-    name: 'Arzler Alm',
-    coordinates: [11.40309, 47.29651],
-    intensity: 0.6
-  },
-  {
-    id: 'node-hungerburg-funicular',
-    name: 'Hungerburg Funicular Station',
+    id: 'nordkette-hungerburg',
+    name: 'Hungerburg Station',
+    region: 'Nordkette, Innsbruck',
     coordinates: [11.40663, 47.29145],
-    intensity: 0.5
+    trails: ['Nordkette Panorama Trail', 'Höhenweg'],
+    status: 'active',
+    lastSynchronized: '2026-01-28T14:12:00Z',
+    lastMaintenance: '2025-11-10',
+    setupDate: '2024-05-18'
   },
   {
-    id: 'node-bergisel',
-    name: 'Bergisel Ski Jump / Trailhead',
-    coordinates: [11.39202, 47.24754],
-    intensity: 0.3
+    id: 'nordkette-arzler-alm',
+    name: 'Arzler Alm',
+    region: 'Nordkette, Innsbruck',
+    coordinates: [11.40309, 47.29651],
+    trails: ['Arzler Alm Trail', 'Nordkette Approach'],
+    status: 'syncing',
+    lastSynchronized: '2026-01-28T07:45:00Z',
+    lastMaintenance: '2025-10-02',
+    setupDate: '2024-06-03'
+  },
+  {
+    id: 'nordkette-kettenbruecke',
+    name: 'Kettenbrücke Trail Access',
+    region: 'Nordkette, Innsbruck',
+    coordinates: [11.3898, 47.2809],
+    trails: ['Kettenbrücke Steig'],
+    status: 'inactive',
+    lastSynchronized: '2025-12-19T09:02:00Z',
+    lastMaintenance: '2025-07-14',
+    setupDate: '2024-04-11'
   }
 ]

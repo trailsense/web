@@ -10,7 +10,9 @@
       :coordinates="node.coordinates"
     >
       <template #marker>
-        <div class="pin" />
+        <NodePopover :node="node">
+          <div class="pin" />
+        </NodePopover>
       </template>
     </mgl-marker>
 
@@ -18,16 +20,15 @@
   </MglMap>
 </template>
 
-<script setup>
-defineProps({
-  nodes: {
-    type: Array,
-    required: true
-  }
-})
+<script setup lang="ts">
+import type { TrailNode } from '~/data/mockNodes'
+
+defineProps<{
+  nodes: TrailNode[]
+}>()
 
 const style = '/map/style.json'
-const center = [11.4041, 47.2692]
+const center: [number, number] = [11.4041, 47.2692]
 const zoom = 10
 </script>
 
