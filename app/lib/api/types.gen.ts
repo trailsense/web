@@ -4,26 +4,141 @@ export type ClientOptions = {
     baseUrl: 'https://api.trailsense.daugt.com' | (string & {});
 };
 
-export type MeasurementDto = {
-    bluetooth: number;
-    created_at?: string | null;
-    wifi: number;
+export type ErrorResponse = {
+    /**
+     * Human-readable error description.
+     */
+    message: string;
+};
+
+export type IngestAcceptedResponse = {
+    /**
+     * Human-readable success description.
+     */
+    message: string;
+};
+
+export type IngestDto = {
+    age_in_seconds: number;
+    count: number;
+    node_id: string;
+};
+
+export type NodeDto = {
+    created_at: string;
+    id: string;
+    latitude: number;
+    longitude: number;
+    name: string;
+    send_frequency_seconds: number;
+    status: NodeStatus;
+};
+
+export type NodeStatus = 'pending' | 'online' | 'unstable' | 'offline';
+
+export type TimeseriesBucket = 'hour' | 'day';
+
+export type TimeseriesPointDto = {
+    bucket_start: string;
+    total_count: number;
 };
 
 export type AddMeasurementData = {
-    body: MeasurementDto;
-    path: {
-        id: string;
-    };
+    body: Array<IngestDto>;
+    path?: never;
     query?: never;
-    url: '/ingest/{id}';
+    url: '/ingest';
 };
+
+export type AddMeasurementErrors = {
+    /**
+     * Validation error
+     */
+    400: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type AddMeasurementError = AddMeasurementErrors[keyof AddMeasurementErrors];
 
 export type AddMeasurementResponses = {
     /**
      * Ingest accepted
      */
-    200: string;
+    200: IngestAcceptedResponse;
 };
 
 export type AddMeasurementResponse = AddMeasurementResponses[keyof AddMeasurementResponses];
+
+export type MeasurementTimeseriesData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Node identifier to aggregate measurements for.
+         */
+        node_id: string;
+        /**
+         * Aggregation bucket. `hour` supports up to 31 days, `day` supports up to 1 year.
+         */
+        bucket: TimeseriesBucket;
+        /**
+         * Range start (inclusive), must be earlier than `to`.
+         */
+        from: string;
+        /**
+         * Range end (exclusive); max range is 1 year (or 31 days when `bucket=hour`).
+         */
+        to: string;
+    };
+    url: '/measurements/timeseries';
+};
+
+export type MeasurementTimeseriesErrors = {
+    /**
+     * Invalid query parameters or range limits exceeded
+     */
+    400: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type MeasurementTimeseriesError = MeasurementTimeseriesErrors[keyof MeasurementTimeseriesErrors];
+
+export type MeasurementTimeseriesResponses = {
+    /**
+     * Measurement timeseries for node
+     */
+    200: Array<TimeseriesPointDto>;
+};
+
+export type MeasurementTimeseriesResponse = MeasurementTimeseriesResponses[keyof MeasurementTimeseriesResponses];
+
+export type ListNodesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/nodes';
+};
+
+export type ListNodesErrors = {
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type ListNodesError = ListNodesErrors[keyof ListNodesErrors];
+
+export type ListNodesResponses = {
+    /**
+     * List nodes
+     */
+    200: Array<NodeDto>;
+};
+
+export type ListNodesResponse = ListNodesResponses[keyof ListNodesResponses];

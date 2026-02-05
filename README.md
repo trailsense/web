@@ -45,4 +45,5 @@ mise run deploy
 
 Notes:
 - `NUXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is the only Clerk key needed for this client-side build.
+- `NUXT_PUBLIC_API_BASE_URL` can override the backend base URL used by the generated API client.
 - `EXPOSE 3000` in the Dockerfile is documentation; runtime port comes from `NITRO_PORT`.

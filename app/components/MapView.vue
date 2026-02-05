@@ -8,14 +8,14 @@
     <mgl-marker
       v-for="node in nodes"
       :key="node.id"
-      :coordinates="node.coordinates"
+      :coordinates="[node.longitude, node.latitude]"
     >
       <template #marker>
         <NodePopover :node="node">
           <div
             class="pin cursor-pointer"
             :class="{ 'pin--active': props.selectedNode?.id === node.id }"
-            @click.stop="emit('select', node)"
+            @click.stop="emit('select', node.id)"
           />
         </NodePopover>
       </template>
@@ -26,12 +26,12 @@
 </template>
 
 <script setup lang="ts">
-import type { TrailNode } from '~/data/mockNodes'
 import type { Map as MapLibreMap } from 'maplibre-gl'
+import type { NodeDto } from '~/lib/api/types.gen'
 
 const props = defineProps<{
-  nodes: TrailNode[]
-  selectedNode?: TrailNode | null
+  nodes: NodeDto[]
+  selectedNode?: NodeDto | null
 }>()
 
 interface MglMapInstance {
@@ -41,7 +41,7 @@ interface MglMapInstance {
 const mapRef = ref<MglMapInstance | null>(null)
 
 const emit = defineEmits<{
-  (e: 'select', node: TrailNode): void
+  (e: 'select', nodeId: string): void
 }>()
 
 const style = '/map/style.json'
@@ -56,7 +56,7 @@ watch(
 
     if (node) {
       map.flyTo({
-        center: node.coordinates,
+        center: [node.longitude, node.latitude],
         zoom: 14,
         speed: 1.2,
         curve: 1.4,

@@ -1,7 +1,7 @@
 <template>
   <div
     class="flex items-start gap-3 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-    @click="$emit('select', node)"
+    @click="$emit('select', node.id)"
   >
     <span
       class="mt-1 h-2.5 w-2.5 rounded-full shrink-0"
@@ -13,29 +13,25 @@
         {{ node.name }}
       </p>
       <p class="text-xs text-gray-500 truncate">
-        {{ node.region }}
+        Every {{ node.send_frequency_seconds }}s
       </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TrailNode } from '~/data/mockNodes'
+import { getNodeStatusClass } from '~/utils/node-status'
+import type { NodeDto } from '~/lib/api/types.gen'
 
 defineEmits<{
-  (e: 'select', node: TrailNode): void
+  (e: 'select', nodeId: string): void
 }>()
 
 const props = defineProps<{
-  node: TrailNode
+  node: NodeDto
 }>()
 
 const statusClass = computed(() => {
-  switch (props.node.status) {
-    case 'active': return 'bg-green-500'
-    case 'syncing': return 'bg-yellow-400'
-    case 'inactive': return 'bg-red-500'
-    default: return 'bg-gray-400'
-  }
+  return getNodeStatusClass(props.node.status)
 })
 </script>

@@ -18,28 +18,16 @@
         </div>
 
         <p class="text-xs text-gray-500">
-          {{ node.region }}
+          Node ID: {{ node.id }}
         </p>
 
         <div>
-          <p class="font-medium">
-            Tracked trails
-          </p>
-          <ul class="list-disc list-inside text-xs">
-            <li
-              v-for="trail in node.trails"
-              :key="trail"
-            >
-              {{ trail }}
-            </li>
-          </ul>
+          <p><strong>Send frequency:</strong> Every {{ node.send_frequency_seconds }}s</p>
         </div>
 
         <div class="text-xs space-y-1">
-          <p><strong>Coordinates:</strong> {{ node.coordinates.join(', ') }}</p>
-          <p><strong>Last sync:</strong> {{ formatDate(node.lastSynchronized) }}</p>
-          <p><strong>Last maintenance:</strong> {{ node.lastMaintenance }}</p>
-          <p><strong>Setup date:</strong> {{ node.setupDate }}</p>
+          <p><strong>Coordinates:</strong> {{ node.longitude }}, {{ node.latitude }}</p>
+          <p><strong>Created:</strong> {{ formatDate(node.created_at) }}</p>
         </div>
       </div>
     </template>
@@ -47,23 +35,15 @@
 </template>
 
 <script setup lang="ts">
-import type { TrailNode } from '~/data/mockNodes'
+import { getNodeStatusClass } from '~/utils/node-status'
+import type { NodeDto } from '~/lib/api/types.gen'
 
 const props = defineProps<{
-  node: TrailNode
+  node: NodeDto
 }>()
 
 const statusClass = computed(() => {
-  switch (props.node.status) {
-    case 'active':
-      return 'bg-green-500'
-    case 'syncing':
-      return 'bg-yellow-400'
-    case 'inactive':
-      return 'bg-red-500'
-    default:
-      return 'bg-gray-400'
-  }
+  return getNodeStatusClass(props.node.status)
 })
 
 const formatDate = (iso: string) =>

@@ -1,14 +1,8 @@
-<script lang="ts" setup>
-import { mockNodes, type TrailNode } from '~/data/mockNodes'
-
-const selectedNode = useState<TrailNode | null>('selectedNode', () => null)
-</script>
-
 <template>
   <UDashboardGroup>
     <UDashboardSidebar
-      :min-size="14"
-      collapsible
+      :max-size="32"
+      :min-size="24"
       resizable
     >
       <template #header="{ collapsed }">
@@ -18,17 +12,9 @@ const selectedNode = useState<TrailNode | null>('selectedNode', () => null)
         />
       </template>
 
-      <NodeSidebarList
-        v-if="!selectedNode"
-        :nodes="mockNodes"
-        @select="selectedNode = $event"
-      />
-
-      <NodeSidebarDetails
-        v-else
-        :node="selectedNode"
-        @back="selectedNode = null"
-      />
+      <div class="py-2">
+        <slot name="sidebar" />
+      </div>
 
       <template #footer="{ collapsed }">
         <div class="w-full">
@@ -37,10 +23,12 @@ const selectedNode = useState<TrailNode | null>('selectedNode', () => null)
               :class="{ 'gap-x-2 justify-between': !collapsed, 'justify-center': collapsed }"
               class="flex items-center"
             >
-              <OrganizationSwitcher
+              <div
                 v-if="!collapsed"
                 class="min-w-0 flex-1"
-              />
+              >
+                <OrganizationSwitcher />
+              </div>
               <UserButton />
             </div>
           </SignedIn>
@@ -52,9 +40,9 @@ const selectedNode = useState<TrailNode | null>('selectedNode', () => null)
     </UDashboardSidebar>
     <div class="flex-1">
       <UDashboardNavbar
+        :toggle="false"
         class="w-full"
         title="Dashboard"
-        :toggle="false"
       >
         <template #leading>
           <UDashboardSidebarToggle
@@ -67,6 +55,7 @@ const selectedNode = useState<TrailNode | null>('selectedNode', () => null)
           />
         </template>
       </UDashboardNavbar>
+
       <slot />
     </div>
   </UDashboardGroup>
