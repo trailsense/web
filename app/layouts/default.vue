@@ -38,10 +38,14 @@
       <UDashboardNavbar
         class="w-full"
         title="Dashboard"
+        :toggle="false"
       >
         <template #leading>
+          <UDashboardSidebarToggle
+            color="neutral"
+            variant="ghost"
+          />
           <UDashboardSidebarCollapse
-            class="hidden md:inline-flex"
             color="neutral"
             variant="ghost"
           />
