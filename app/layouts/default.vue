@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { mockNodes } from '~/data/mockNodes'
 </script>
 
 <template>
@@ -14,6 +15,9 @@
           class="h-8 w-auto shrink-0"
         />
       </template>
+
+      <NodeSidebarList :nodes="mockNodes" />
+
       <template #footer="{ collapsed }">
         <div class="w-full">
           <SignedIn>
