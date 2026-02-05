@@ -14,6 +14,7 @@
         <NodePopover :node="node">
           <div
             class="pin cursor-pointer"
+            :class="{ 'pin--active': props.selectedNode?.id === node.id }"
             @click.stop="emit('select', node)"
           />
         </NodePopover>
@@ -79,10 +80,9 @@ watch(
   position: relative;
   width: 14px;
   height: 14px;
-  background: #000000;
+  background: #5c5c5c;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
 }
 
 .pin::after {
@@ -94,5 +94,10 @@ watch(
   height: 6px;
   background: white;
   border-radius: 50%;
+}
+
+.pin--active {
+  background-color: #000000;
+  transform: rotate(-45deg) scale(1.3);
 }
 </style>
