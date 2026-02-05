@@ -48,6 +48,9 @@
       <p><strong>Last maintenance:</strong> {{ node.lastMaintenance }}</p>
       <p><strong>Setup date:</strong> {{ node.setupDate }}</p>
     </div>
+    <div v-if="node.activity">
+      <NodeActivityChart :activity="node.activity" />
+    </div>
   </div>
 </template>
 
