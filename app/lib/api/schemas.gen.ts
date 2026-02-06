@@ -111,7 +111,8 @@ export const TimeseriesBucketSchema = {
     type: 'string',
     enum: [
         'hour',
-        'day'
+        'day',
+        'week'
     ]
 } as const;
 

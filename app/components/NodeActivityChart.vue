@@ -30,11 +30,15 @@ const chartData = computed<ChartDatum[]>(() =>
     const date = new Date(point.timestamp)
     const axisLabel = props.bucket === 'hour'
       ? date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit' })
-      : date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      : props.bucket === 'week'
+        ? date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+        : date.toLocaleDateString([], { month: 'short', day: 'numeric' })
 
     const hoverLabel = props.bucket === 'hour'
       ? date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-      : date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
+      : props.bucket === 'week'
+        ? `Week of ${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+        : date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
 
     return {
       count: point.value,

@@ -34,9 +34,9 @@
       <p><strong>Created:</strong> {{ formatDate(node.created_at) }}</p>
     </div>
 
-    <div class="space-y-3">
+    <div class="space-y-3 pt-8">
       <p class="text-sm font-medium">
-        Measurements
+        Activity Measurements
       </p>
 
       <UTabs
@@ -181,7 +181,8 @@ const periodItems = [
 ]
 const customBucketItems = [
   { label: 'Hourly', value: 'hour' },
-  { label: 'Daily', value: 'day' }
+  { label: 'Daily', value: 'day' },
+  { label: 'Weekly', value: 'week' }
 ]
 const inputDate = useTemplateRef('inputDate')
 const localTimeZone = getLocalTimeZone()
@@ -203,13 +204,26 @@ const selectedPeriod = computed<string | number>({
   }
 })
 const selectedCustomBucket = computed<string | number>({
-  get: () => customBucket.value,
+  get: () => {
+    if (customBucket.value) return customBucket.value
+
+    const from = parseIsoDate(rangeFrom.value)
+    const to = parseIsoDate(rangeTo.value)
+
+    if (!from || !to) return 'day'
+
+    const days = (to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000)
+    if (days <= 1) return 'hour'
+    if (days <= 30) return 'day'
+    return 'week'
+  },
   set: (value) => {
-    if (value === 'hour' || value === 'day') {
+    if (value === 'hour' || value === 'day' || value === 'week') {
       setCustomBucket(value as TimeseriesBucket)
     }
   }
 })
+
 const selectedRange = computed<DateRange | undefined>({
   get: () => {
     const start = parseIsoDate(rangeFrom.value)

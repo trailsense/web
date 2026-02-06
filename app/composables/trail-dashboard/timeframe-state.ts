@@ -3,8 +3,6 @@ import type { DashboardPeriod } from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const HOUR_MS = 60 * 60 * 1000
-const MAX_HOURLY_RANGE_DAYS = 31
-const MAX_DAILY_RANGE_DAYS = 365
 
 const parseDate = (input: string, fallback: Date): Date => {
   const date = new Date(input)
@@ -98,22 +96,17 @@ const shiftPeriodStart = (period: DashboardPeriod, start: Date, direction: -1 | 
 export function useTrailDashboardTimeframeState() {
   const period = useState<DashboardPeriod>('dashboard:period', () => 'weekly')
   const periodAnchor = useState<string>('dashboard:periodAnchor', () => nowRoundedToHour().toISOString())
-  const customBucket = useState<TimeseriesBucket>('dashboard:customBucket', () => 'day')
+  const customBucket = useState<TimeseriesBucket | undefined>('dashboard:customBucket', () => 'day')
   const customRangeFrom = useState<string>('dashboard:customRangeFrom', () => defaultCustomRange('day').from)
   const customRangeTo = useState<string>('dashboard:customRangeTo', () => defaultCustomRange('day').to)
 
   const normalizeCustomRange = () => {
     const fallbackTo = nowRoundedToHour()
     let to = parseDate(customRangeTo.value, fallbackTo)
-    let from = parseDate(customRangeFrom.value, new Date(to.getTime() - 7 * DAY_MS))
+    const from = parseDate(customRangeFrom.value, new Date(to.getTime() - 7 * DAY_MS))
 
     if (to <= from) {
       to = new Date(from.getTime() + HOUR_MS)
-    }
-
-    const maxRangeMs = (customBucket.value === 'hour' ? MAX_HOURLY_RANGE_DAYS : MAX_DAILY_RANGE_DAYS) * DAY_MS
-    if (to.getTime() - from.getTime() > maxRangeMs) {
-      from = new Date(to.getTime() - maxRangeMs)
     }
 
     customRangeFrom.value = from.toISOString()
@@ -124,27 +117,56 @@ export function useTrailDashboardTimeframeState() {
     getPeriodBounds(period.value, parseDate(periodAnchor.value, nowRoundedToHour()))
   )
 
-  const bucket = computed(() => (period.value === 'custom' ? customBucket.value : periodBounds.value.bucket))
+  const autoBucketForRange = (from: Date, to: Date): TimeseriesBucket => {
+    const days = (to.getTime() - from.getTime()) / DAY_MS
+
+    if (days <= 1) return 'hour'
+    if (days <= 30) return 'day'
+    return 'week'
+  }
+
+  const bucket = computed(() => {
+    if (period.value !== 'custom') {
+      return periodBounds.value.bucket
+    }
+
+    const from = parseDate(customRangeFrom.value, nowRoundedToHour())
+    const to = parseDate(customRangeTo.value, nowRoundedToHour())
+
+    if (!customBucket.value) {
+      return autoBucketForRange(from, to)
+    }
+
+    return customBucket.value
+  })
+
   const rangeFrom = computed(() => (period.value === 'custom' ? customRangeFrom.value : periodBounds.value.from.toISOString()))
   const rangeTo = computed(() => (period.value === 'custom' ? customRangeTo.value : periodBounds.value.to.toISOString()))
   const currentPeriodStart = computed(() => getPeriodBounds(period.value, nowRoundedToHour()).from.getTime())
 
   const setPeriod = (nextPeriod: DashboardPeriod) => {
-    if (period.value === nextPeriod) {
-      return
-    }
+    if (period.value === nextPeriod) return
 
-    const currentStart = periodBounds.value.from
     period.value = nextPeriod
-    periodAnchor.value = currentStart.toISOString()
+
+    if (nextPeriod !== 'custom') {
+      periodAnchor.value = nowRoundedToHour().toISOString()
+    }
   }
 
   const shiftPeriod = (direction: -1 | 1) => {
-    if (period.value === 'custom') {
-      return
+    if (period.value === 'custom') return
+
+    let windowStart = periodBounds.value.from
+    if (period.value === 'weekly') {
+      windowStart = addDays(windowStart, direction * 7)
+    } else if (period.value === 'daily') {
+      windowStart = addDays(windowStart, direction)
+    } else if (period.value === 'monthly') {
+      windowStart = addMonths(windowStart, direction)
     }
-    const nextStart = shiftPeriodStart(period.value, periodBounds.value.from, direction)
-    periodAnchor.value = nextStart.toISOString()
+
+    periodAnchor.value = windowStart.toISOString()
   }
 
   const canShiftForward = computed(
@@ -191,19 +213,20 @@ export function useTrailDashboardTimeframeState() {
     }).format(start)
   })
 
-  const setCustomBucket = (nextBucket: TimeseriesBucket) => {
-    customBucket.value = nextBucket
-    normalizeCustomRange()
+  const setCustomBucket = (next: TimeseriesBucket) => {
+    customBucket.value = next
   }
 
   const setCustomRangeFrom = (iso: string) => {
     customRangeFrom.value = iso
     normalizeCustomRange()
+    customBucket.value = undefined
   }
 
   const setCustomRangeTo = (iso: string) => {
     customRangeTo.value = iso
     normalizeCustomRange()
+    customBucket.value = undefined
   }
 
   return {

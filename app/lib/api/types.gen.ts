@@ -36,7 +36,7 @@ export type NodeDto = {
 
 export type NodeStatus = 'pending' | 'online' | 'unstable' | 'offline';
 
-export type TimeseriesBucket = 'hour' | 'day';
+export type TimeseriesBucket = 'hour' | 'day' | 'week';
 
 export type TimeseriesPointDto = {
     bucket_start: string;
@@ -81,7 +81,7 @@ export type MeasurementTimeseriesData = {
          */
         node_id: string;
         /**
-         * Aggregation bucket. `hour` supports up to 31 days, `day` supports up to 1 year.
+         * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
          */
         bucket: TimeseriesBucket;
         /**
@@ -89,7 +89,7 @@ export type MeasurementTimeseriesData = {
          */
         from: string;
         /**
-         * Range end (exclusive); max range is 1 year (or 31 days when `bucket=hour`).
+         * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
          */
         to: string;
     };
