@@ -34,6 +34,8 @@
         :key="node.id"
         :node="node"
         @select="$emit('select', node.id)"
+        @mouseenter="$emit('hover', node.id)"
+        @mouseleave="$emit('leave')"
       />
     </div>
   </div>
@@ -52,6 +54,7 @@ withDefaults(defineProps<{
 })
 
 defineEmits<{
-  (e: 'select', nodeId: string): void
+  (e: 'select' | 'hover', nodeId: string): void
+  (e: 'leave'): void
 }>()
 </script>

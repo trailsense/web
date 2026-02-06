@@ -7,6 +7,8 @@
         :is-loading="isNodesLoading"
         :nodes="nodes"
         @select="selectNode"
+        @hover="hoveredNodeId = $event"
+        @leave="hoveredNodeId = null"
       />
 
       <NodeSidebarDetails
@@ -19,7 +21,10 @@
     <MapView
       :nodes="nodes"
       :selected-node="selectedNode"
+      :hovered-node-id="hoveredNodeId"
       @select="selectNode"
+      @hover="hoveredNodeId = $event"
+      @leave="hoveredNodeId = null"
     />
   </NuxtLayout>
 </template>
@@ -35,6 +40,7 @@ const dashboard = useTrailDashboard()
 const { nodes, nodesQuery, selectedNode, selectNode } = dashboard
 const isNodesLoading = computed(() => nodesQuery.isLoading.value || nodesQuery.isPending.value)
 const nodesErrorText = computed(() => (nodesQuery.error.value ? 'Failed to load nodes.' : ''))
+const hoveredNodeId = ref<string | null>(null)
 
 provide(TRAIL_DASHBOARD_KEY, dashboard)
 </script>
