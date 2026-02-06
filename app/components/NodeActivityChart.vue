@@ -54,10 +54,6 @@ const yFormatter = (tick: number) => tick.toString()
 
 <template>
   <div class="space-y-2 rounded-lg border border-gray-200 p-3">
-    <p class="text-sm font-medium">
-      Measurements over time
-    </p>
-
     <p
       v-if="isLoading"
       class="text-sm text-gray-500"
@@ -84,7 +80,7 @@ const yFormatter = (tick: number) => tick.toString()
       :categories="chartCategories"
       :data="chartData"
       :height="280"
-      :hide-legend="false"
+      :hide-legend="true"
       :radius="8"
       :x-formatter="xFormatter"
       :x-num-ticks="8"

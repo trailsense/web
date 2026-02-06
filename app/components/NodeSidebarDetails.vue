@@ -2,8 +2,8 @@
   <div class="p-4 space-y-4">
     <UButton
       icon="i-lucide-arrow-left"
-      variant="ghost"
       size="xs"
+      variant="ghost"
       @click="$emit('back')"
     >
       Back to nodes
@@ -20,8 +20,8 @@
 
     <div class="flex items-center gap-2 text-sm">
       <span
-        class="h-2.5 w-2.5 rounded-full"
         :class="statusClass"
+        class="h-2.5 w-2.5 rounded-full"
       />
       <span>
         {{ statusLabel }}
@@ -35,75 +35,110 @@
     </div>
 
     <div class="space-y-3">
-      <div class="flex items-center justify-between">
-        <p class="text-sm font-medium">
-          Measurements
-        </p>
-        <UTabs
-          v-model="selectedBucket"
-          :items="bucketItems"
-          :content="false"
+      <p class="text-sm font-medium">
+        Measurements
+      </p>
+
+      <UTabs
+        v-model="selectedPeriod"
+        :content="false"
+        :items="periodItems"
+        class="w-full"
+        color="primary"
+        size="xs"
+        variant="pill"
+      />
+
+      <div
+        v-if="!isCustomMode"
+        class="flex items-center gap-2"
+      >
+        <UButton
+          :disabled="isTimeseriesLoading"
           color="primary"
-          variant="pill"
+          icon="i-lucide-chevron-left"
           size="xs"
-          class="w-44"
+          variant="soft"
+          @click="shiftPeriod(-1)"
+        />
+        <p class="flex-1 text-center text-xs font-medium text-gray-700 truncate">
+          {{ periodLabel }}
+        </p>
+        <UButton
+          :disabled="isTimeseriesLoading || !canShiftForward"
+          color="primary"
+          icon="i-lucide-chevron-right"
+          size="xs"
+          variant="soft"
+          @click="shiftPeriod(1)"
         />
       </div>
 
-      <UInputDate
-        ref="inputDate"
-        v-model="selectedRange"
-        range
-        color="primary"
-        variant="outline"
-        granularity="day"
-        :hide-time-zone="true"
-        :disabled="isTimeseriesLoading"
-        class="w-full"
+      <div
+        v-else
+        class="space-y-2"
       >
-        <template #trailing>
-          <UPopover :reference="inputDate?.inputsRef[0]?.$el">
-            <UButton
-              color="neutral"
-              variant="link"
-              size="sm"
-              icon="i-lucide-calendar"
-              aria-label="Select a date range"
-              class="px-0"
-            />
+        <UTabs
+          v-model="selectedCustomBucket"
+          :content="false"
+          :items="customBucketItems"
+          class="w-full"
+          color="primary"
+          size="xs"
+          variant="pill"
+        />
 
-            <template #content>
-              <UCalendar
-                v-model="selectedRange"
-                class="p-2"
-                :number-of-months="2"
-                range
-                color="primary"
+        <UInputDate
+          ref="inputDate"
+          v-model="selectedRange"
+          :disabled="isTimeseriesLoading"
+          :hide-time-zone="true"
+          class="w-full"
+          color="primary"
+          granularity="day"
+          range
+          variant="outline"
+        >
+          <template #trailing>
+            <UPopover :reference="inputDate?.inputsRef[0]?.$el">
+              <UButton
+                aria-label="Select a date range"
+                class="px-0"
+                color="neutral"
+                icon="i-lucide-calendar"
+                size="sm"
+                variant="link"
               />
-            </template>
-          </UPopover>
-        </template>
-      </UInputDate>
 
-      <p class="text-xs text-gray-500">
-        Max range: {{ maxRangeDays }} days for {{ bucket === 'hour' ? 'hourly' : 'daily' }} buckets.
-      </p>
+              <template #content>
+                <UCalendar
+                  v-model="selectedRange"
+                  :number-of-months="2"
+                  class="p-2"
+                  color="primary"
+                  range
+                />
+              </template>
+            </UPopover>
+          </template>
+        </UInputDate>
+      </div>
     </div>
 
     <NodeActivityChart
-      :points="points"
       :bucket="bucket"
-      :is-loading="isTimeseriesLoading"
       :error-text="timeseriesErrorText"
+      :is-loading="isTimeseriesLoading"
+      :points="points"
     />
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { fromDate, getLocalTimeZone } from '@internationalized/date'
 import type { DateRange } from 'reka-ui'
+import type { DashboardPeriod, TrailDashboardState } from '~/composables/useTrailDashboard'
 import { TRAIL_DASHBOARD_KEY } from '~/composables/useTrailDashboard'
-import type { TrailDashboardState } from '~/composables/useTrailDashboard'
 import type { NodeDto, TimeseriesBucket } from '~/lib/api/types.gen'
 import { getNodeStatusClass, getNodeStatusLabel } from '~/utils/node-status'
 
@@ -121,14 +156,34 @@ if (!dashboard) {
   throw new Error('Trail dashboard state is not available.')
 }
 
-const { bucket, maxRangeDays, points, rangeFrom, rangeTo, setBucket, setRangeFrom, setRangeTo, timeseriesQuery } = dashboard
+const {
+  bucket,
+  canShiftForward,
+  customBucket,
+  period,
+  periodLabel,
+  points,
+  rangeFrom,
+  rangeTo,
+  setCustomBucket,
+  setCustomRangeFrom,
+  setCustomRangeTo,
+  setPeriod,
+  shiftPeriod,
+  timeseriesQuery
+} = dashboard
 
-const bucketItems = [
+const periodItems = [
+  { label: 'Daily', value: 'daily' },
+  { label: 'Weekly', value: 'weekly' },
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'Custom', value: 'custom' }
+]
+const customBucketItems = [
   { label: 'Hourly', value: 'hour' },
   { label: 'Daily', value: 'day' }
 ]
 const inputDate = useTemplateRef('inputDate')
-
 const localTimeZone = getLocalTimeZone()
 
 const parseIsoDate = (iso: string) => {
@@ -137,16 +192,24 @@ const parseIsoDate = (iso: string) => {
 }
 
 const toDateValue = (date: Date) => fromDate(date, localTimeZone)
+const isCustomMode = computed(() => period.value === 'custom')
 
-const selectedBucket = computed<string | number>({
-  get: () => bucket.value,
+const selectedPeriod = computed<string | number>({
+  get: () => period.value,
   set: (value) => {
-    if (value === 'hour' || value === 'day') {
-      setBucket(value as TimeseriesBucket)
+    if (value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'custom') {
+      setPeriod(value as DashboardPeriod)
     }
   }
 })
-
+const selectedCustomBucket = computed<string | number>({
+  get: () => customBucket.value,
+  set: (value) => {
+    if (value === 'hour' || value === 'day') {
+      setCustomBucket(value as TimeseriesBucket)
+    }
+  }
+})
 const selectedRange = computed<DateRange | undefined>({
   get: () => {
     const start = parseIsoDate(rangeFrom.value)
@@ -156,7 +219,6 @@ const selectedRange = computed<DateRange | undefined>({
     }
 
     const end = new Date(endRaw.getTime() - 1)
-
     return {
       start: toDateValue(start),
       end: toDateValue(end)
@@ -174,8 +236,8 @@ const selectedRange = computed<DateRange | undefined>({
     endDate.setHours(0, 0, 0, 0)
     endDate.setDate(endDate.getDate() + 1)
 
-    setRangeFrom(startDate.toISOString())
-    setRangeTo(endDate.toISOString())
+    setCustomRangeFrom(startDate.toISOString())
+    setCustomRangeTo(endDate.toISOString())
   }
 })
 
