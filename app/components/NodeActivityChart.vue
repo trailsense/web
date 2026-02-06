@@ -1,77 +1,110 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
-import type { NodeActivity } from '~/data/mockNodes'
+import type { TimeseriesBucket } from '~/lib/api/types.gen'
+
+type TimeseriesPoint = {
+  timestamp: string
+  value: number
+}
+
+type ChartDatum = {
+  count: number
+  axisLabel: string
+  hoverLabel: string
+}
 
 const props = withDefaults(
   defineProps<{
-    activity: NodeActivity
-    showTitle?: boolean
+    bucket: TimeseriesBucket
+    points: TimeseriesPoint[]
+    isLoading?: boolean
+    errorText?: string
   }>(),
-  { showTitle: false }
+  {
+    isLoading: false,
+    errorText: ''
+  }
 )
 
-const selectedMode = ref<'daily' | 'weekly' | 'monthly'>('daily')
-const modes: Array<'daily' | 'weekly' | 'monthly'> = ['daily', 'weekly', 'monthly']
+const chartData = computed<ChartDatum[]>(() =>
+  props.points.map((point) => {
+    const date = new Date(point.timestamp)
+    const axisLabel = props.bucket === 'hour'
+      ? date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit' })
+      : props.bucket === 'week'
+        ? date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+        : date.toLocaleDateString([], { month: 'short', day: 'numeric' })
 
-const ChartData = computed(() => {
-  const data = props.activity[selectedMode.value] || []
-  return data.map(d => ({ activity: d.value }))
-})
+    const hoverLabel = props.bucket === 'hour'
+      ? date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : props.bucket === 'week'
+        ? `Week of ${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+        : date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
 
-const ChartLabels = computed(() => {
-  const data = props.activity[selectedMode.value] || []
-  return data.map((d) => {
-    const date = new Date(d.timestamp)
-    if (selectedMode.value === 'daily') {
-      return `${date.getHours()}:00`
-    } else if (selectedMode.value === 'weekly') {
-      return date.toLocaleDateString([], { weekday: 'short' })
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    return {
+      count: point.value,
+      axisLabel,
+      hoverLabel
     }
   })
-})
+)
 
-const ChartCategories = computed(() => ({
-  activity: { name: 'Activity', color: '#6EE7B7' }
+const chartCategories = computed(() => ({
+  count: { name: 'Measurements', color: '#10b981' }
 }))
 
-const xFormatter = (i: number) => ChartLabels.value[i] || ''
+const xFormatter = (index: number) => chartData.value[index]?.axisLabel || ''
 const yFormatter = (tick: number) => tick.toString()
 </script>
 
 <template>
-  <div
-    class="mx-auto max-w-3xl space-y-4 rounded-lg"
-    :class="props.showTitle ? 'p-6' : ''"
-  >
-    <div class="flex justify-between items-center">
-      <h3 class="text-lg font-semibold">
-        Activity
-      </h3>
-      <div class="flex space-x-2 text-xs text-gray-500">
-        <button
-          v-for="mode in modes"
-          :key="mode"
-          :class="{ 'font-semibold text-black': selectedMode === mode }"
-          @click="selectedMode = mode"
-        >
-          {{ mode.charAt(0).toUpperCase() + mode.slice(1) }}
-        </button>
-      </div>
-    </div>
+  <div class="space-y-2 rounded-lg border border-gray-200 p-3">
+    <p
+      v-if="isLoading"
+      class="text-sm text-gray-500"
+    >
+      Loading measurements...
+    </p>
+
+    <p
+      v-else-if="errorText"
+      class="text-sm text-red-600"
+    >
+      {{ errorText }}
+    </p>
+
+    <p
+      v-else-if="chartData.length === 0"
+      class="text-sm text-gray-500"
+    >
+      No measurements in the selected range.
+    </p>
 
     <BarChart
-      :data="ChartData"
-      :height="300"
-      :categories="ChartCategories"
-      :y-axis="['activity']"
-      :x-num-ticks="12"
-      :radius="4"
-      :y-grid-line="true"
+      v-else
+      :categories="chartCategories"
+      :data="chartData"
+      :height="280"
+      :hide-legend="true"
+      :radius="8"
       :x-formatter="xFormatter"
+      :x-num-ticks="8"
+      :y-axis="['count']"
       :y-formatter="yFormatter"
-      :hide-legend="false"
-    />
+      :y-grid-line="true"
+    >
+      <template #tooltip="{ values }">
+        <div
+          v-if="values"
+          class="text-xs"
+        >
+          <p class="font-medium text-gray-800">
+            {{ values.hoverLabel }}
+          </p>
+          <p class="text-gray-600">
+            {{ values.count }} measurements
+          </p>
+        </div>
+      </template>
+    </BarChart>
   </div>
 </template>

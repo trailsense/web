@@ -23,6 +23,12 @@ export default defineNuxtConfig({
     colorMode: false
   },
 
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: import.meta.env.NUXT_PUBLIC_API_BASE_URL || 'https://api.trailsense.daugt.com'
+    }
+  },
+
   compatibilityDate: '2025-01-15',
 
   clerk: {

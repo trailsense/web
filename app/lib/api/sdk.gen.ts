@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddMeasurementData, AddMeasurementResponses } from './types.gen';
+import type { AddMeasurementData, AddMeasurementErrors, AddMeasurementResponses, ListNodesData, ListNodesErrors, ListNodesResponses, MeasurementTimeseriesData, MeasurementTimeseriesErrors, MeasurementTimeseriesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -18,11 +18,15 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: Record<string, unknown>;
 };
 
-export const addMeasurement = <ThrowOnError extends boolean = false>(options: Options<AddMeasurementData, ThrowOnError>) => (options.client ?? client).post<AddMeasurementResponses, unknown, ThrowOnError>({
-    url: '/ingest/{id}',
+export const addMeasurement = <ThrowOnError extends boolean = false>(options: Options<AddMeasurementData, ThrowOnError>) => (options.client ?? client).post<AddMeasurementResponses, AddMeasurementErrors, ThrowOnError>({
+    url: '/ingest',
     ...options,
     headers: {
         'Content-Type': 'application/json',
         ...options.headers
     }
 });
+
+export const measurementTimeseries = <ThrowOnError extends boolean = false>(options: Options<MeasurementTimeseriesData, ThrowOnError>) => (options.client ?? client).get<MeasurementTimeseriesResponses, MeasurementTimeseriesErrors, ThrowOnError>({ url: '/measurements/timeseries', ...options });
+
+export const listNodes = <ThrowOnError extends boolean = false>(options?: Options<ListNodesData, ThrowOnError>) => (options?.client ?? client).get<ListNodesResponses, ListNodesErrors, ThrowOnError>({ url: '/nodes', ...options });

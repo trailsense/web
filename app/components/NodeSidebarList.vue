@@ -4,25 +4,57 @@
       Trail Nodes
     </p>
 
-    <div class="space-y-1">
+    <p
+      v-if="isLoading"
+      class="px-3 py-2 text-sm text-gray-500"
+    >
+      Loading nodes...
+    </p>
+
+    <p
+      v-else-if="errorText"
+      class="px-3 py-2 text-sm text-red-600"
+    >
+      {{ errorText }}
+    </p>
+
+    <p
+      v-else-if="nodes.length === 0"
+      class="px-3 py-2 text-sm text-gray-500"
+    >
+      No nodes available.
+    </p>
+
+    <div
+      v-else
+      class="space-y-1"
+    >
       <NodeListItem
         v-for="node in nodes"
         :key="node.id"
         :node="node"
-        @select="$emit('select', node)"
+        @select="$emit('select', node.id)"
+        @mouseenter="$emit('hover', node.id)"
+        @mouseleave="$emit('leave')"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TrailNode } from '~/data/mockNodes'
+import type { NodeDto } from '~/lib/api/types.gen'
 
-defineProps<{
-  nodes: TrailNode[]
-}>()
+withDefaults(defineProps<{
+  nodes: NodeDto[]
+  isLoading?: boolean
+  errorText?: string
+}>(), {
+  isLoading: false,
+  errorText: ''
+})
 
 defineEmits<{
-  (e: 'select', node: TrailNode): void
+  (e: 'select' | 'hover', nodeId: string): void
+  (e: 'leave'): void
 }>()
 </script>
