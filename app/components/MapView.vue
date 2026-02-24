@@ -35,13 +35,14 @@
 
 <script setup lang="ts">
 import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl'
-import type { NodeDto } from '~/lib/api/types.gen'
-import type { TrailDto } from '../composables/trail-dashboard/types'
+import type { NodeDto, TrailListItemDto } from '~/lib/api/types.gen'
+import type { TrailDashboardState } from '~/composables/useTrailDashboard'
+import { TRAIL_DASHBOARD_KEY } from '~/composables/useTrailDashboard'
 
 const props = defineProps<{
   mode: 'nodes' | 'trails'
   nodes: NodeDto[]
-  trails: TrailDto[]
+  trails: TrailListItemDto[]
   selectedNode?: NodeDto | null
   hoveredNodeId?: string | null
   selectedTrailId?: string | null
@@ -51,6 +52,8 @@ const emit = defineEmits<{
   (e: 'selectNode' | 'hoverNode' | 'selectTrail', id: string): void
   (e: 'leaveNode'): void
 }>()
+
+const dashboard = inject<TrailDashboardState>(TRAIL_DASHBOARD_KEY)
 
 interface MglMapInstance {
   map?: MapLibreMap
@@ -62,34 +65,39 @@ const style = '/map/style.json'
 const center: [number, number] = [13.0867, 47.7239]
 const zoom = 12
 
-const getTrailColor = (activity: number) => {
-  if (activity < 20) return '#16a34a'
-  if (activity < 40) return '#eab308'
-  if (activity < 60) return '#f97316'
-  if (activity < 80) return '#ef4444'
-  return '#7f1d1d'
-}
-
-const trailGeoJson = computed(() => ({
+const trailGeoJson = computed<GeoJSON.FeatureCollection>(() => ({
   type: 'FeatureCollection',
-  features: props.trails.map(trail => ({
-    type: 'Feature',
-    properties: {
-      id: trail.id,
-      color: getTrailColor(trail.averageActivity)
-    },
-    geometry: {
-      type: 'LineString',
-      coordinates: trail.nodes.map(n => [n.longitude, n.latitude])
-    }
-  }))
+  features: props.trails
+    .filter(t => t.geometry_geojson)
+    .map(trail => ({
+      type: 'Feature',
+      properties: {
+        id: trail.id
+      },
+      geometry: trail.geometry_geojson as unknown as GeoJSON.MultiLineString
+    }))
 }))
+
+function updateBbox() {
+  const map = mapRef.value?.map
+  if (!map || !dashboard) return
+  const b = map.getBounds()
+  dashboard.setTrailBbox({
+    min_lon: b.getWest(),
+    min_lat: b.getSouth(),
+    max_lon: b.getEast(),
+    max_lat: b.getNorth()
+  })
+}
 
 const onMapLoad = () => {
   const map = mapRef.value?.map
   if (!map) return
 
-  if (mode === 'trails' && !map.getSource('trails')) {
+  updateBbox()
+  map.on('moveend', updateBbox)
+
+  if (!map.getSource('trails')) {
     map.addSource('trails', {
       type: 'geojson',
       data: trailGeoJson.value
@@ -103,11 +111,12 @@ const onMapLoad = () => {
       source: 'trails',
       layout: {
         'line-join': 'round',
-        'line-cap': 'round'
+        'line-cap': 'round',
+        'visibility': props.mode === 'trails' ? 'visible' : 'none'
       },
       paint: {
         'line-width': 4,
-        'line-color': ['get', 'color'],
+        'line-color': '#16a34a',
         'line-opacity': [
           'case',
           ['==', ['get', 'id'], props.selectedTrailId],
@@ -140,6 +149,18 @@ watch(
     if (source) source.setData(geo)
   },
   { deep: true }
+)
+
+watch(
+  () => props.mode,
+  (mode) => {
+    const map = mapRef.value?.map
+    if (!map) return
+    const visibility = mode === 'trails' ? 'visible' : 'none'
+    if (map.getLayer('trails-line')) {
+      map.setLayoutProperty('trails-line', 'visibility', visibility)
+    }
+  }
 )
 
 watch(

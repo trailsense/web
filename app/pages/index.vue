@@ -22,7 +22,7 @@
       <template v-else>
         <TrailSidebarList
           v-if="!selectedTrail"
-          :trails="mockTrails"
+          :trails="trails"
           @select="selectTrail"
         />
 
@@ -37,7 +37,7 @@
     <MapView
       :mode="viewMode"
       :nodes="nodes"
-      :trails="mockTrails"
+      :trails="trails"
       :selected-node="selectedNode"
       :hovered-node-id="hoveredNodeId"
       :selected-trail-id="selectedTrailId"
@@ -51,16 +51,24 @@
 
 <script lang="ts" setup>
 import { TRAIL_DASHBOARD_KEY, useTrailDashboard } from '~/composables/useTrailDashboard'
-import { mockTrails } from '~/mock/trailmocks'
 
 definePageMeta({
   layout: false
 })
 
 const dashboard = useTrailDashboard()
-const { nodes, nodesQuery, selectedNode, selectNode } = dashboard
+
+const {
+  nodes,
+  nodesQuery,
+  selectedNode,
+  selectNode,
+  trails
+} = dashboard
+
 const isNodesLoading = computed(() => nodesQuery.isLoading.value || nodesQuery.isPending.value)
 const nodesErrorText = computed(() => (nodesQuery.error.value ? 'Failed to load nodes.' : ''))
+
 const hoveredNodeId = ref<string | null>(null)
 
 provide(TRAIL_DASHBOARD_KEY, dashboard)
@@ -68,7 +76,7 @@ provide(TRAIL_DASHBOARD_KEY, dashboard)
 const selectedTrailId = ref<string | null>(null)
 
 const selectedTrail = computed(() =>
-  mockTrails.find(t => t.id === selectedTrailId.value) ?? null
+  trails.value.find(t => t.id === selectedTrailId.value) ?? null
 )
 
 const selectTrail = (id: string | null) => {

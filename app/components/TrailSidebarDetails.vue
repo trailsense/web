@@ -14,31 +14,28 @@
         {{ trail.name }}
       </h2>
       <p class="text-sm text-gray-500">
-        Average activity: {{ trail.averageActivity }}%
+        Source: {{ trail.source }}
+      </p>
+
+      <p
+        v-if="trail.source_id"
+        class="text-xs text-gray-400"
+      >
+        Source ID: {{ trail.source_id }}
       </p>
     </div>
 
-    <div>
-      <p class="text-sm font-medium mb-2">
-        Included Nodes
-      </p>
-      <ul class="text-sm text-gray-600 space-y-1">
-        <li
-          v-for="n in trail.nodes"
-          :key="n.id"
-        >
-          {{ n.id }}
-        </li>
-      </ul>
+    <div class="text-xs text-gray-400">
+      ID: {{ trail.id }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TrailDto } from '../composables/trail-dashboard/types'
+import type { TrailListItemDto } from '~/lib/api/types.gen'
 
 defineProps<{
-  trail: TrailDto
+  trail: TrailListItemDto
 }>()
 
 defineEmits<{

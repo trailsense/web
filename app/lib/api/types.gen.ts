@@ -11,6 +11,14 @@ export type ErrorResponse = {
     message: string;
 };
 
+export type GeoJsonMultiLineString = {
+    /**
+     * GeoJSON coordinates in `[longitude, latitude]`.
+     */
+    coordinates: Array<Array<Array<number>>>;
+    type: string;
+};
+
 export type IngestAcceptedResponse = {
     /**
      * Human-readable success description.
@@ -44,7 +52,7 @@ export type TimeseriesPointDto = {
 };
 
 export type TrailListItemDto = {
-    geometry_geojson?: unknown;
+    geometry_geojson?: GeoJsonMultiLineString;
     id: string;
     name: string;
     source: string;

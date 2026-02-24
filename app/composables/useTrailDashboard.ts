@@ -14,13 +14,35 @@ export function useTrailDashboard() {
     return typeof nodeId === 'string' && nodeId.length > 0 ? nodeId : null
   })
 
+  const trailBbox = useState<{
+    min_lon: number
+    min_lat: number
+    max_lon: number
+    max_lat: number
+  } | null>('dashboard:trailBbox', () => null)
+
+  const setTrailBbox = (bbox: typeof trailBbox.value) => {
+    trailBbox.value = bbox
+  }
+
   const timeframe = useTrailDashboardTimeframeState()
   const { bucket, rangeFrom, rangeTo } = timeframe
-  const { nodes, nodesQuery, points, selectedNode, timeseriesQuery } = useTrailDashboardQueries({
+
+  const {
+    nodes,
+    nodesQuery,
+    points,
+    selectedNode,
+    timeseriesQuery,
+    trails,
+    trailsQuery,
+    trailsGeoJson
+  } = useTrailDashboardQueries({
     selectedNodeId,
     bucket,
     rangeFrom,
-    rangeTo
+    rangeTo,
+    trailBbox
   })
 
   const selectNode = (nodeId: string | null) => {
@@ -67,7 +89,11 @@ export function useTrailDashboard() {
     selectedNode,
     selectedNodeId,
     selectNode,
-    timeseriesQuery
+    timeseriesQuery,
+    trails,
+    trailsQuery,
+    trailsGeoJson,
+    setTrailBbox
   }
 }
 

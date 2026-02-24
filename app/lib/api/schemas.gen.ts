@@ -14,6 +14,34 @@ export const ErrorResponseSchema = {
     }
 } as const;
 
+export const GeoJsonMultiLineStringSchema = {
+    type: 'object',
+    required: [
+        'type',
+        'coordinates'
+    ],
+    properties: {
+        coordinates: {
+            type: 'array',
+            items: {
+                type: 'array',
+                items: {
+                    type: 'array',
+                    items: {
+                        type: 'number',
+                        format: 'double'
+                    }
+                }
+            },
+            description: 'GeoJSON coordinates in `[longitude, latitude]`.'
+        },
+        type: {
+            type: 'string',
+            example: 'MultiLineString'
+        }
+    }
+} as const;
+
 export const IngestAcceptedResponseSchema = {
     type: 'object',
     required: [
@@ -142,7 +170,9 @@ export const TrailListItemDtoSchema = {
         'name'
     ],
     properties: {
-        geometry_geojson: {},
+        geometry_geojson: {
+            $ref: '#/components/schemas/GeoJsonMultiLineString'
+        },
         id: {
             type: 'string',
             format: 'uuid'

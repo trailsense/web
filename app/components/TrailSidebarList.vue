@@ -4,7 +4,17 @@
       Trails
     </p>
 
-    <div class="space-y-1">
+    <div
+      v-if="trails.length === 0"
+      class="px-3 py-6 text-sm text-gray-500"
+    >
+      No trails in current map view.
+    </div>
+
+    <div
+      v-else
+      class="space-y-1"
+    >
       <div
         v-for="trail in trails"
         :key="trail.id"
@@ -15,7 +25,7 @@
           {{ trail.name }}
         </p>
         <p class="text-xs text-gray-500">
-          Avg activity: {{ trail.averageActivity }}%
+          Source: {{ trail.source }}
         </p>
       </div>
     </div>
@@ -23,10 +33,10 @@
 </template>
 
 <script setup lang="ts">
-import type { TrailDto } from '../composables/trail-dashboard/types'
+import type { TrailListItemDto } from '~/lib/api/types.gen'
 
 defineProps<{
-  trails: TrailDto[]
+  trails: TrailListItemDto[]
 }>()
 
 defineEmits<{
