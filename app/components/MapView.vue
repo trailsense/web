@@ -29,13 +29,12 @@
     <mgl-geo-json-source
       source-id="trails"
       :data="trailGeoJson"
+      :generate-id="true"
     >
       <mgl-line-layer
         layer-id="trails-line"
         :layout="{ 'line-join': 'round', 'line-cap': 'round' }"
-        :paint="{
-          'line-color': '#16a34a',
-          'line-width': 2 }"
+        :paint="trailPaint"
         :visibility="mode === 'trails' ? 'visible' : 'none'"
       />
     </mgl-geo-json-source>
@@ -45,11 +44,11 @@
 </template>
 
 <script setup lang="ts">
-import type { Map as MapLibreMap } from 'maplibre-gl'
+import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl'
 import type { NodeDto, TrailListItemDto } from '~/lib/api/types.gen'
 import type { TrailDashboardState } from '~/composables/useTrailDashboard'
 import { TRAIL_DASHBOARD_KEY } from '~/composables/useTrailDashboard'
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, watch } from 'vue'
 
 const props = defineProps<{
   mode: 'nodes' | 'trails'
@@ -58,6 +57,7 @@ const props = defineProps<{
   selectedNode?: NodeDto | null
   hoveredNodeId?: string | null
   selectedTrailId?: string | null
+  hoveredTrailIdFromList?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -68,10 +68,11 @@ const emit = defineEmits<{
 const dashboard = inject<TrailDashboardState>(TRAIL_DASHBOARD_KEY)
 
 const mapRef = ref<{ map: MapLibreMap } | null>(null)
+const hoveredTrailId = ref<string | null>(null)
 
 const style = '/map/style.json'
 const center: [number, number] = [13.0867, 47.7239]
-const zoom = 12
+const zoom = 13
 
 const trailGeoJson = computed(() => ({
   type: 'FeatureCollection',
@@ -86,6 +87,27 @@ const trailGeoJson = computed(() => ({
       },
       geometry: trail.geometry_geojson
     }))
+}))
+
+const effectiveHoveredTrailId = computed(() => props.hoveredTrailIdFromList ?? hoveredTrailId.value)
+
+const trailPaint = computed(() => ({
+  'line-color': [
+    'case',
+    ['==', ['get', 'id'], props.selectedTrailId],
+    '#15803d',
+    ['==', ['get', 'id'], effectiveHoveredTrailId.value],
+    '#15803d',
+    '#16a34a'
+  ],
+  'line-width': [
+    'case',
+    ['==', ['get', 'id'], props.selectedTrailId],
+    4,
+    ['==', ['get', 'id'], effectiveHoveredTrailId.value],
+    4,
+    2
+  ]
 }))
 
 function getMap() {
@@ -107,9 +129,91 @@ function updateBbox() {
 const onMapLoad = () => {
   const map = getMap()
   if (!map) return
+
   updateBbox()
   map.on('moveend', updateBbox)
+
+  map.on('mousemove', 'trails-line', (e) => {
+    const feature = e.features?.[0]
+    if (!feature) return
+    hoveredTrailId.value = feature.properties?.id ?? null
+  })
+
+  map.on('mouseleave', 'trails-line', () => {
+    hoveredTrailId.value = null
+  })
+
+  map.on('mouseenter', 'trails-line', () => {
+    map.getCanvas().style.cursor = 'pointer'
+  })
+
+  map.on('mouseleave', 'trails-line', () => {
+    map.getCanvas().style.cursor = ''
+  })
+
+  map.on('click', 'trails-line', (e) => {
+    const feature = e.features?.[0]
+    const id = feature?.properties?.id
+    if (!id) return
+    emit('selectTrail', id)
+  })
 }
+
+watch(
+  () => props.selectedNode,
+  (node) => {
+    const map = getMap()
+    if (!map) return
+
+    if (node) {
+      map.flyTo({
+        center: [node.longitude, node.latitude],
+        zoom: 14,
+        speed: 1,
+        curve: 1.4,
+        essential: true
+      })
+    } else {
+      map.flyTo({
+        center,
+        zoom,
+        speed: 1,
+        curve: 1.4,
+        essential: true
+      })
+    }
+  }
+)
+
+watch(
+  () => props.selectedTrailId,
+  (id) => {
+    const map = getMap()
+    if (!map) return
+
+    if (!id) {
+      map.flyTo({
+        center,
+        zoom,
+        speed: 1,
+        curve: 1.4,
+        essential: true
+      })
+      return
+    }
+
+    const trail = props.trails.find(t => t.id === id)
+    const coords = trail?.geometry_geojson?.coordinates
+    if (!coords?.length) return
+
+    const bounds = new maplibregl.LngLatBounds(coords[0][0], coords[0][0])
+    coords.forEach((line) => {
+      line.forEach(coord => bounds.extend(coord as [number, number]))
+    })
+
+    map.fitBounds(bounds, { padding: 40, duration: 600 })
+  }
+)
 </script>
 
 <style scoped>

@@ -162,6 +162,47 @@ export const TimeseriesPointDtoSchema = {
     }
 } as const;
 
+export const TrailDetailDtoSchema = {
+    type: 'object',
+    required: [
+        'id',
+        'source',
+        'name',
+        'tags'
+    ],
+    properties: {
+        geometry_geojson: {
+            $ref: '#/components/schemas/GeoJsonMultiLineString'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid'
+        },
+        name: {
+            type: 'string'
+        },
+        source: {
+            type: 'string'
+        },
+        source_id: {
+            type: [
+                'integer',
+                'null'
+            ],
+            format: 'int64'
+        },
+        tags: {
+            type: 'object',
+            additionalProperties: {
+                type: 'string'
+            },
+            propertyNames: {
+                type: 'string'
+            }
+        }
+    }
+} as const;
+
 export const TrailListItemDtoSchema = {
     type: 'object',
     required: [

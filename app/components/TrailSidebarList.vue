@@ -20,6 +20,8 @@
         :key="trail.id"
         class="px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer"
         @click="$emit('select', trail.id)"
+        @mouseenter="$emit('hover', trail.id)"
+        @mouseleave="$emit('leave')"
       >
         <p class="text-sm font-medium">
           {{ trail.name }}
@@ -40,6 +42,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  (e: 'select', trailId: string): void
+  (e: 'select' | 'hover', trailId: string): void
+  (e: 'leave'): void
 }>()
 </script>

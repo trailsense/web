@@ -4,8 +4,8 @@ import { type _JSONValue, defineQueryOptions, type UseMutationOptions } from '@p
 
 import { serializeQueryKeyValue } from '../client';
 import { client } from '../client.gen';
-import { addMeasurement, listNodes, listTrails, measurementTimeseries, type Options } from '../sdk.gen';
-import type { AddMeasurementData, AddMeasurementError, AddMeasurementResponse, ListNodesData, ListTrailsData, MeasurementTimeseriesData } from '../types.gen';
+import { addMeasurement, getNodeTrails, getTrail, getTrailNodes, listNodes, listTrails, measurementTimeseries, type Options } from '../sdk.gen';
+import type { AddMeasurementData, AddMeasurementError, AddMeasurementResponse, GetNodeTrailsData, GetTrailData, GetTrailNodesData, ListNodesData, ListTrailsData, MeasurementTimeseriesData } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'path'> & {
@@ -56,6 +56,34 @@ export const listTrailsQuery = defineQueryOptions((options?: Options<ListTrailsD
     }
 }));
 
+export const getTrailQueryKey = (options: Options<GetTrailData>) => createQueryKey('getTrail', options);
+
+export const getTrailQuery = defineQueryOptions((options: Options<GetTrailData>) => ({
+    key: getTrailQueryKey(options),
+    query: async (context) => {
+        const { data } = await getTrail({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const getTrailNodesQueryKey = (options: Options<GetTrailNodesData>) => createQueryKey('getTrailNodes', options);
+
+export const getTrailNodesQuery = defineQueryOptions((options: Options<GetTrailNodesData>) => ({
+    key: getTrailNodesQueryKey(options),
+    query: async (context) => {
+        const { data } = await getTrailNodes({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
 export const addMeasurementMutation = (options?: Partial<Options<AddMeasurementData>>): UseMutationOptions<AddMeasurementResponse, Options<AddMeasurementData>, AddMeasurementError> => ({
     mutation: async (vars) => {
         const { data } = await addMeasurement({
@@ -87,6 +115,20 @@ export const listNodesQuery = defineQueryOptions((options?: Options<ListNodesDat
     key: listNodesQueryKey(options),
     query: async (context) => {
         const { data } = await listNodes({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const getNodeTrailsQueryKey = (options: Options<GetNodeTrailsData>) => createQueryKey('getNodeTrails', options);
+
+export const getNodeTrailsQuery = defineQueryOptions((options: Options<GetNodeTrailsData>) => ({
+    key: getNodeTrailsQueryKey(options),
+    query: async (context) => {
+        const { data } = await getNodeTrails({
             ...options,
             ...context,
             throwOnError: true

@@ -51,6 +51,17 @@ export type TimeseriesPointDto = {
     total_count: number;
 };
 
+export type TrailDetailDto = {
+    geometry_geojson?: GeoJsonMultiLineString;
+    id: string;
+    name: string;
+    source: string;
+    source_id?: number | null;
+    tags: {
+        [key: string]: string;
+    };
+};
+
 export type TrailListItemDto = {
     geometry_geojson?: GeoJsonMultiLineString;
     id: string;
@@ -112,6 +123,92 @@ export type ListTrailsResponses = {
 };
 
 export type ListTrailsResponse = ListTrailsResponses[keyof ListTrailsResponses];
+
+export type GetTrailData = {
+    body?: never;
+    path: {
+        /**
+         * Trail ID
+         */
+        trail_id: string;
+    };
+    query?: {
+        /**
+         * Include trail geometry/path in the response.
+         */
+        include_geo?: boolean;
+    };
+    url: '/geo/trails/{trail_id}';
+};
+
+export type GetTrailErrors = {
+    /**
+     * Validation error
+     */
+    400: ErrorResponse;
+    /**
+     * Trail not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type GetTrailError = GetTrailErrors[keyof GetTrailErrors];
+
+export type GetTrailResponses = {
+    /**
+     * Trail detail
+     */
+    200: TrailDetailDto;
+};
+
+export type GetTrailResponse = GetTrailResponses[keyof GetTrailResponses];
+
+export type GetTrailNodesData = {
+    body?: never;
+    path: {
+        /**
+         * Trail ID
+         */
+        trail_id: string;
+    };
+    query?: {
+        /**
+         * Distance threshold in meters from the trail geometry. Defaults to 25m.
+         */
+        tolerance_m?: number;
+    };
+    url: '/geo/trails/{trail_id}/nodes';
+};
+
+export type GetTrailNodesErrors = {
+    /**
+     * Validation error
+     */
+    400: ErrorResponse;
+    /**
+     * Trail not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type GetTrailNodesError = GetTrailNodesErrors[keyof GetTrailNodesErrors];
+
+export type GetTrailNodesResponses = {
+    /**
+     * Nodes near trail
+     */
+    200: Array<NodeDto>;
+};
+
+export type GetTrailNodesResponse = GetTrailNodesResponses[keyof GetTrailNodesResponses];
 
 export type AddMeasurementData = {
     body: Array<IngestDto>;
@@ -212,3 +309,50 @@ export type ListNodesResponses = {
 };
 
 export type ListNodesResponse = ListNodesResponses[keyof ListNodesResponses];
+
+export type GetNodeTrailsData = {
+    body?: never;
+    path: {
+        /**
+         * Node ID
+         */
+        node_id: string;
+    };
+    query?: {
+        /**
+         * Include trail geometry/path in the response.
+         */
+        include_geo?: boolean;
+        /**
+         * Distance threshold in meters from the node point. Defaults to 25m.
+         */
+        tolerance_m?: number;
+    };
+    url: '/nodes/{node_id}/trails';
+};
+
+export type GetNodeTrailsErrors = {
+    /**
+     * Validation error
+     */
+    400: ErrorResponse;
+    /**
+     * Node not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type GetNodeTrailsError = GetNodeTrailsErrors[keyof GetNodeTrailsErrors];
+
+export type GetNodeTrailsResponses = {
+    /**
+     * Trails near node
+     */
+    200: Array<TrailListItemDto>;
+};
+
+export type GetNodeTrailsResponse = GetNodeTrailsResponses[keyof GetNodeTrailsResponses];

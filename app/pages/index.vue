@@ -24,6 +24,8 @@
           v-if="!selectedTrail"
           :trails="trails"
           @select="selectTrail"
+          @hover="hoveredTrailId = $event"
+          @leave="hoveredTrailId = null"
         />
 
         <TrailSidebarDetails
@@ -41,6 +43,7 @@
       :selected-node="selectedNode"
       :hovered-node-id="hoveredNodeId"
       :selected-trail-id="selectedTrailId"
+      :hovered-trail-id-from-list="hoveredTrailId"
       @select-node="selectNode"
       @hover-node="hoveredNodeId = $event"
       @leave-node="hoveredNodeId = null"
@@ -57,6 +60,8 @@ definePageMeta({
 })
 
 const dashboard = useTrailDashboard()
+
+const hoveredTrailId = ref<string | null>(null)
 
 const {
   nodes,
