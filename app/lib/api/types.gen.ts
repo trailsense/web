@@ -43,6 +43,68 @@ export type TimeseriesPointDto = {
     total_count: number;
 };
 
+export type TrailListItemDto = {
+    geometry_geojson?: unknown;
+    id: string;
+    name: string;
+    source: string;
+    source_id?: number | null;
+};
+
+export type ListTrailsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Optional bbox min longitude (WGS84 / EPSG:4326).
+         */
+        min_lon?: number;
+        /**
+         * Optional bbox min latitude (WGS84 / EPSG:4326).
+         */
+        min_lat?: number;
+        /**
+         * Optional bbox max longitude (WGS84 / EPSG:4326).
+         */
+        max_lon?: number;
+        /**
+         * Optional bbox max latitude (WGS84 / EPSG:4326).
+         */
+        max_lat?: number;
+        /**
+         * Include trail geometry/path in the response. Requires `bbox` to be set.
+         */
+        include_geo?: boolean;
+        /**
+         * Hard cap for number of returned trails. Defaults to 50.
+         */
+        limit?: number;
+    };
+    url: '/geo/trails';
+};
+
+export type ListTrailsErrors = {
+    /**
+     * Validation error
+     */
+    400: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type ListTrailsError = ListTrailsErrors[keyof ListTrailsErrors];
+
+export type ListTrailsResponses = {
+    /**
+     * List trails
+     */
+    200: Array<TrailListItemDto>;
+};
+
+export type ListTrailsResponse = ListTrailsResponses[keyof ListTrailsResponses];
+
 export type AddMeasurementData = {
     body: Array<IngestDto>;
     path?: never;

@@ -133,3 +133,32 @@ export const TimeseriesPointDtoSchema = {
         }
     }
 } as const;
+
+export const TrailListItemDtoSchema = {
+    type: 'object',
+    required: [
+        'id',
+        'source',
+        'name'
+    ],
+    properties: {
+        geometry_geojson: {},
+        id: {
+            type: 'string',
+            format: 'uuid'
+        },
+        name: {
+            type: 'string'
+        },
+        source: {
+            type: 'string'
+        },
+        source_id: {
+            type: [
+                'integer',
+                'null'
+            ],
+            format: 'int64'
+        }
+    }
+} as const;

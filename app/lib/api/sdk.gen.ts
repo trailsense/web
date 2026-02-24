@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddMeasurementData, AddMeasurementErrors, AddMeasurementResponses, ListNodesData, ListNodesErrors, ListNodesResponses, MeasurementTimeseriesData, MeasurementTimeseriesErrors, MeasurementTimeseriesResponses } from './types.gen';
+import type { AddMeasurementData, AddMeasurementErrors, AddMeasurementResponses, ListNodesData, ListNodesErrors, ListNodesResponses, ListTrailsData, ListTrailsErrors, ListTrailsResponses, MeasurementTimeseriesData, MeasurementTimeseriesErrors, MeasurementTimeseriesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -17,6 +17,8 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
+
+export const listTrails = <ThrowOnError extends boolean = false>(options?: Options<ListTrailsData, ThrowOnError>) => (options?.client ?? client).get<ListTrailsResponses, ListTrailsErrors, ThrowOnError>({ url: '/geo/trails', ...options });
 
 export const addMeasurement = <ThrowOnError extends boolean = false>(options: Options<AddMeasurementData, ThrowOnError>) => (options.client ?? client).post<AddMeasurementResponses, AddMeasurementErrors, ThrowOnError>({
     url: '/ingest',

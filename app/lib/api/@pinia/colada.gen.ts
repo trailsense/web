@@ -4,19 +4,8 @@ import { type _JSONValue, defineQueryOptions, type UseMutationOptions } from '@p
 
 import { serializeQueryKeyValue } from '../client';
 import { client } from '../client.gen';
-import { addMeasurement, listNodes, measurementTimeseries, type Options } from '../sdk.gen';
-import type { AddMeasurementData, AddMeasurementError, AddMeasurementResponse, ListNodesData, MeasurementTimeseriesData } from '../types.gen';
-
-export const addMeasurementMutation = (options?: Partial<Options<AddMeasurementData>>): UseMutationOptions<AddMeasurementResponse, Options<AddMeasurementData>, AddMeasurementError> => ({
-    mutation: async (vars) => {
-        const { data } = await addMeasurement({
-            ...options,
-            ...vars,
-            throwOnError: true
-        });
-        return data;
-    }
-});
+import { addMeasurement, listNodes, listTrails, measurementTimeseries, type Options } from '../sdk.gen';
+import type { AddMeasurementData, AddMeasurementError, AddMeasurementResponse, ListNodesData, ListTrailsData, MeasurementTimeseriesData } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'path'> & {
@@ -52,6 +41,31 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     }
     return [params];
 };
+
+export const listTrailsQueryKey = (options?: Options<ListTrailsData>) => createQueryKey('listTrails', options);
+
+export const listTrailsQuery = defineQueryOptions((options?: Options<ListTrailsData>) => ({
+    key: listTrailsQueryKey(options),
+    query: async (context) => {
+        const { data } = await listTrails({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const addMeasurementMutation = (options?: Partial<Options<AddMeasurementData>>): UseMutationOptions<AddMeasurementResponse, Options<AddMeasurementData>, AddMeasurementError> => ({
+    mutation: async (vars) => {
+        const { data } = await addMeasurement({
+            ...options,
+            ...vars,
+            throwOnError: true
+        });
+        return data;
+    }
+});
 
 export const measurementTimeseriesQueryKey = (options: Options<MeasurementTimeseriesData>) => createQueryKey('measurementTimeseries', options);
 
