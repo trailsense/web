@@ -4,7 +4,7 @@
     :center="center"
     :map-style="style"
     :zoom="zoom"
-    @load="onMapLoad"
+    @map:load="onMapLoad"
   >
     <mgl-marker
       v-for="node in nodes"
@@ -78,8 +78,12 @@ const trailGeoJson = computed<GeoJSON.FeatureCollection>(() => ({
     }))
 }))
 
+function getMap() {
+  return mapRef.value?.map
+}
+
 function updateBbox() {
-  const map = mapRef.value?.map
+  const map = getMap()
   if (!map || !dashboard) return
   const b = map.getBounds()
   dashboard.setTrailBbox({
@@ -91,7 +95,7 @@ function updateBbox() {
 }
 
 const onMapLoad = () => {
-  const map = mapRef.value?.map
+  const map = getMap()
   if (!map) return
 
   updateBbox()
@@ -126,7 +130,7 @@ const onMapLoad = () => {
       }
     })
 
-    map.on('click', 'trails-line', (e) => {
+    map.on('click', 'trails-line', (e: any) => {
       const id = e.features?.[0]?.properties?.id
       if (id) emit('selectTrail', id)
     })
@@ -144,7 +148,7 @@ const onMapLoad = () => {
 watch(
   trailGeoJson,
   (geo) => {
-    const map = mapRef.value?.map
+    const map = getMap()
     const source = map?.getSource('trails') as GeoJSONSource | undefined
     if (source) source.setData(geo)
   },
@@ -154,7 +158,7 @@ watch(
 watch(
   () => props.mode,
   (mode) => {
-    const map = mapRef.value?.map
+    const map = getMap()
     if (!map) return
     const visibility = mode === 'trails' ? 'visible' : 'none'
     if (map.getLayer('trails-line')) {
@@ -166,7 +170,7 @@ watch(
 watch(
   () => props.selectedNode,
   (node) => {
-    const map = mapRef.value?.map
+    const map = getMap()
     if (!map) return
 
     if (node) {

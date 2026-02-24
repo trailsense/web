@@ -1,11 +1,6 @@
 import { useQuery } from '@pinia/colada'
-import { listNodesQuery, measurementTimeseriesQuery, listTrailsQuery } from '~/lib/api/@pinia/colada.gen'
-import type {
-  NodeDto,
-  TimeseriesBucket,
-  TimeseriesPointDto,
-  TrailListItemDto
-} from '~/lib/api/types.gen'
+import { listNodesQuery, listTrailsQuery, measurementTimeseriesQuery } from '~/lib/api/@pinia/colada.gen'
+import type { NodeDto, TimeseriesBucket, TimeseriesPointDto, TrailListItemDto } from '~/lib/api/types.gen'
 
 type ApiArrayEnvelope<T> = {
   data?: T[]
@@ -108,7 +103,7 @@ export function useTrailDashboardQueries(params: {
           max_lon: bbox.max_lon,
           max_lat: bbox.max_lat,
           include_geo: true,
-          limit: 500
+          limit: 50
         }
       }),
       key: [
