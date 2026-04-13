@@ -102,19 +102,6 @@ export type ListTrailsData = {
     url: '/geo/trails';
 };
 
-export type ListTrailsErrors = {
-    /**
-     * Validation error
-     */
-    400: ErrorResponse;
-    /**
-     * Internal server error
-     */
-    500: ErrorResponse;
-};
-
-export type ListTrailsError = ListTrailsErrors[keyof ListTrailsErrors];
-
 export type ListTrailsResponses = {
     /**
      * List trails
@@ -140,23 +127,6 @@ export type GetTrailData = {
     };
     url: '/geo/trails/{trail_id}';
 };
-
-export type GetTrailErrors = {
-    /**
-     * Validation error
-     */
-    400: ErrorResponse;
-    /**
-     * Trail not found
-     */
-    404: ErrorResponse;
-    /**
-     * Internal server error
-     */
-    500: ErrorResponse;
-};
-
-export type GetTrailError = GetTrailErrors[keyof GetTrailErrors];
 
 export type GetTrailResponses = {
     /**
@@ -184,23 +154,6 @@ export type GetTrailNodesData = {
     url: '/geo/trails/{trail_id}/nodes';
 };
 
-export type GetTrailNodesErrors = {
-    /**
-     * Validation error
-     */
-    400: ErrorResponse;
-    /**
-     * Trail not found
-     */
-    404: ErrorResponse;
-    /**
-     * Internal server error
-     */
-    500: ErrorResponse;
-};
-
-export type GetTrailNodesError = GetTrailNodesErrors[keyof GetTrailNodesErrors];
-
 export type GetTrailNodesResponses = {
     /**
      * Nodes near trail
@@ -216,19 +169,6 @@ export type AddMeasurementData = {
     query?: never;
     url: '/ingest';
 };
-
-export type AddMeasurementErrors = {
-    /**
-     * Validation error
-     */
-    400: ErrorResponse;
-    /**
-     * Internal server error
-     */
-    500: ErrorResponse;
-};
-
-export type AddMeasurementError = AddMeasurementErrors[keyof AddMeasurementErrors];
 
 export type AddMeasurementResponses = {
     /**
@@ -263,19 +203,6 @@ export type MeasurementTimeseriesData = {
     url: '/measurements/timeseries';
 };
 
-export type MeasurementTimeseriesErrors = {
-    /**
-     * Invalid query parameters or range limits exceeded
-     */
-    400: ErrorResponse;
-    /**
-     * Internal server error
-     */
-    500: ErrorResponse;
-};
-
-export type MeasurementTimeseriesError = MeasurementTimeseriesErrors[keyof MeasurementTimeseriesErrors];
-
 export type MeasurementTimeseriesResponses = {
     /**
      * Measurement timeseries for node
@@ -291,15 +218,6 @@ export type ListNodesData = {
     query?: never;
     url: '/nodes';
 };
-
-export type ListNodesErrors = {
-    /**
-     * Internal server error
-     */
-    500: ErrorResponse;
-};
-
-export type ListNodesError = ListNodesErrors[keyof ListNodesErrors];
 
 export type ListNodesResponses = {
     /**
@@ -330,23 +248,6 @@ export type GetNodeTrailsData = {
     };
     url: '/nodes/{node_id}/trails';
 };
-
-export type GetNodeTrailsErrors = {
-    /**
-     * Validation error
-     */
-    400: ErrorResponse;
-    /**
-     * Node not found
-     */
-    404: ErrorResponse;
-    /**
-     * Internal server error
-     */
-    500: ErrorResponse;
-};
-
-export type GetNodeTrailsError = GetNodeTrailsErrors[keyof GetNodeTrailsErrors];
 
 export type GetNodeTrailsResponses = {
     /**

@@ -5,7 +5,7 @@ import { type _JSONValue, defineQueryOptions, type UseMutationOptions } from '@p
 import { serializeQueryKeyValue } from '../client';
 import { client } from '../client.gen';
 import { addMeasurement, getNodeTrails, getTrail, getTrailNodes, listNodes, listTrails, measurementTimeseries, type Options } from '../sdk.gen';
-import type { AddMeasurementData, AddMeasurementError, AddMeasurementResponse, GetNodeTrailsData, GetTrailData, GetTrailNodesData, ListNodesData, ListTrailsData, MeasurementTimeseriesData } from '../types.gen';
+import type { AddMeasurementData, AddMeasurementResponse, GetNodeTrailsData, GetTrailData, GetTrailNodesData, ListNodesData, ListTrailsData, MeasurementTimeseriesData } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'path'> & {
@@ -84,7 +84,7 @@ export const getTrailNodesQuery = defineQueryOptions((options: Options<GetTrailN
     }
 }));
 
-export const addMeasurementMutation = (options?: Partial<Options<AddMeasurementData>>): UseMutationOptions<AddMeasurementResponse, Options<AddMeasurementData>, AddMeasurementError> => ({
+export const addMeasurementMutation = (options?: Partial<Options<AddMeasurementData>>): UseMutationOptions<AddMeasurementResponse, Options<AddMeasurementData>, Error> => ({
     mutation: async (vars) => {
         const { data } = await addMeasurement({
             ...options,

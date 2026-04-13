@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddMeasurementData, AddMeasurementErrors, AddMeasurementResponses, GetNodeTrailsData, GetNodeTrailsErrors, GetNodeTrailsResponses, GetTrailData, GetTrailErrors, GetTrailNodesData, GetTrailNodesErrors, GetTrailNodesResponses, GetTrailResponses, ListNodesData, ListNodesErrors, ListNodesResponses, ListTrailsData, ListTrailsErrors, ListTrailsResponses, MeasurementTimeseriesData, MeasurementTimeseriesErrors, MeasurementTimeseriesResponses } from './types.gen';
+import type { AddMeasurementData, AddMeasurementResponses, GetNodeTrailsData, GetNodeTrailsResponses, GetTrailData, GetTrailNodesData, GetTrailNodesResponses, GetTrailResponses, ListNodesData, ListNodesResponses, ListTrailsData, ListTrailsResponses, MeasurementTimeseriesData, MeasurementTimeseriesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -18,13 +18,25 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: Record<string, unknown>;
 };
 
-export const listTrails = <ThrowOnError extends boolean = false>(options?: Options<ListTrailsData, ThrowOnError>) => (options?.client ?? client).get<ListTrailsResponses, ListTrailsErrors, ThrowOnError>({ url: '/geo/trails', ...options });
+export const listTrails = <ThrowOnError extends boolean = false>(options?: Options<ListTrailsData, ThrowOnError>) => (options?.client ?? client).get<ListTrailsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/geo/trails',
+    ...options
+});
 
-export const getTrail = <ThrowOnError extends boolean = false>(options: Options<GetTrailData, ThrowOnError>) => (options.client ?? client).get<GetTrailResponses, GetTrailErrors, ThrowOnError>({ url: '/geo/trails/{trail_id}', ...options });
+export const getTrail = <ThrowOnError extends boolean = false>(options: Options<GetTrailData, ThrowOnError>) => (options.client ?? client).get<GetTrailResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/geo/trails/{trail_id}',
+    ...options
+});
 
-export const getTrailNodes = <ThrowOnError extends boolean = false>(options: Options<GetTrailNodesData, ThrowOnError>) => (options.client ?? client).get<GetTrailNodesResponses, GetTrailNodesErrors, ThrowOnError>({ url: '/geo/trails/{trail_id}/nodes', ...options });
+export const getTrailNodes = <ThrowOnError extends boolean = false>(options: Options<GetTrailNodesData, ThrowOnError>) => (options.client ?? client).get<GetTrailNodesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/geo/trails/{trail_id}/nodes',
+    ...options
+});
 
-export const addMeasurement = <ThrowOnError extends boolean = false>(options: Options<AddMeasurementData, ThrowOnError>) => (options.client ?? client).post<AddMeasurementResponses, AddMeasurementErrors, ThrowOnError>({
+export const addMeasurement = <ThrowOnError extends boolean = false>(options: Options<AddMeasurementData, ThrowOnError>) => (options.client ?? client).post<AddMeasurementResponses, unknown, ThrowOnError>({
     url: '/ingest',
     ...options,
     headers: {
@@ -33,8 +45,20 @@ export const addMeasurement = <ThrowOnError extends boolean = false>(options: Op
     }
 });
 
-export const measurementTimeseries = <ThrowOnError extends boolean = false>(options: Options<MeasurementTimeseriesData, ThrowOnError>) => (options.client ?? client).get<MeasurementTimeseriesResponses, MeasurementTimeseriesErrors, ThrowOnError>({ url: '/measurements/timeseries', ...options });
+export const measurementTimeseries = <ThrowOnError extends boolean = false>(options: Options<MeasurementTimeseriesData, ThrowOnError>) => (options.client ?? client).get<MeasurementTimeseriesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/measurements/timeseries',
+    ...options
+});
 
-export const listNodes = <ThrowOnError extends boolean = false>(options?: Options<ListNodesData, ThrowOnError>) => (options?.client ?? client).get<ListNodesResponses, ListNodesErrors, ThrowOnError>({ url: '/nodes', ...options });
+export const listNodes = <ThrowOnError extends boolean = false>(options?: Options<ListNodesData, ThrowOnError>) => (options?.client ?? client).get<ListNodesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/nodes',
+    ...options
+});
 
-export const getNodeTrails = <ThrowOnError extends boolean = false>(options: Options<GetNodeTrailsData, ThrowOnError>) => (options.client ?? client).get<GetNodeTrailsResponses, GetNodeTrailsErrors, ThrowOnError>({ url: '/nodes/{node_id}/trails', ...options });
+export const getNodeTrails = <ThrowOnError extends boolean = false>(options: Options<GetNodeTrailsData, ThrowOnError>) => (options.client ?? client).get<GetNodeTrailsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/nodes/{node_id}/trails',
+    ...options
+});
