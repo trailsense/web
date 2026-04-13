@@ -4,19 +4,8 @@ import { type _JSONValue, defineQueryOptions, type UseMutationOptions } from '@p
 
 import { serializeQueryKeyValue } from '../client';
 import { client } from '../client.gen';
-import { addMeasurement, listNodes, measurementTimeseries, type Options } from '../sdk.gen';
-import type { AddMeasurementData, AddMeasurementError, AddMeasurementResponse, ListNodesData, MeasurementTimeseriesData } from '../types.gen';
-
-export const addMeasurementMutation = (options?: Partial<Options<AddMeasurementData>>): UseMutationOptions<AddMeasurementResponse, Options<AddMeasurementData>, AddMeasurementError> => ({
-    mutation: async (vars) => {
-        const { data } = await addMeasurement({
-            ...options,
-            ...vars,
-            throwOnError: true
-        });
-        return data;
-    }
-});
+import { addMeasurement, getNodeTrails, getTrail, getTrailNodes, listNodes, listTrails, measurementTimeseries, type Options } from '../sdk.gen';
+import type { AddMeasurementData, AddMeasurementResponse, GetNodeTrailsData, GetTrailData, GetTrailNodesData, ListNodesData, ListTrailsData, MeasurementTimeseriesData } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'path'> & {
@@ -53,6 +42,59 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     return [params];
 };
 
+export const listTrailsQueryKey = (options?: Options<ListTrailsData>) => createQueryKey('listTrails', options);
+
+export const listTrailsQuery = defineQueryOptions((options?: Options<ListTrailsData>) => ({
+    key: listTrailsQueryKey(options),
+    query: async (context) => {
+        const { data } = await listTrails({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const getTrailQueryKey = (options: Options<GetTrailData>) => createQueryKey('getTrail', options);
+
+export const getTrailQuery = defineQueryOptions((options: Options<GetTrailData>) => ({
+    key: getTrailQueryKey(options),
+    query: async (context) => {
+        const { data } = await getTrail({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const getTrailNodesQueryKey = (options: Options<GetTrailNodesData>) => createQueryKey('getTrailNodes', options);
+
+export const getTrailNodesQuery = defineQueryOptions((options: Options<GetTrailNodesData>) => ({
+    key: getTrailNodesQueryKey(options),
+    query: async (context) => {
+        const { data } = await getTrailNodes({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const addMeasurementMutation = (options?: Partial<Options<AddMeasurementData>>): UseMutationOptions<AddMeasurementResponse, Options<AddMeasurementData>, Error> => ({
+    mutation: async (vars) => {
+        const { data } = await addMeasurement({
+            ...options,
+            ...vars,
+            throwOnError: true
+        });
+        return data;
+    }
+});
+
 export const measurementTimeseriesQueryKey = (options: Options<MeasurementTimeseriesData>) => createQueryKey('measurementTimeseries', options);
 
 export const measurementTimeseriesQuery = defineQueryOptions((options: Options<MeasurementTimeseriesData>) => ({
@@ -73,6 +115,20 @@ export const listNodesQuery = defineQueryOptions((options?: Options<ListNodesDat
     key: listNodesQueryKey(options),
     query: async (context) => {
         const { data } = await listNodes({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const getNodeTrailsQueryKey = (options: Options<GetNodeTrailsData>) => createQueryKey('getNodeTrails', options);
+
+export const getNodeTrailsQuery = defineQueryOptions((options: Options<GetNodeTrailsData>) => ({
+    key: getNodeTrailsQueryKey(options),
+    query: async (context) => {
+        const { data } = await getNodeTrails({
             ...options,
             ...context,
             throwOnError: true
