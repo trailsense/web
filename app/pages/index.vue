@@ -53,6 +53,7 @@
 </template>
 
 <script lang="ts" setup>
+import { watch } from 'vue'
 import { TRAIL_DASHBOARD_KEY, useTrailDashboard } from '~/composables/useTrailDashboard'
 
 definePageMeta({
@@ -85,6 +86,14 @@ const selectedTrail = computed(() =>
 )
 
 const viewMode = useState<'nodes' | 'trails'>('dashboard:viewMode')
+
+watch(viewMode, (newMode) => {
+  if (newMode === 'nodes' && selectedTrailId.value) {
+    selectedTrailId.value = null
+  } else if (newMode === 'trails' && selectedNode.value) {
+    selectNode(null)
+  }
+})
 
 const selectNodeHandler = (id: string | null) => {
   selectNode(id)
