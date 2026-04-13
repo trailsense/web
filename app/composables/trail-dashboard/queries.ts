@@ -129,7 +129,7 @@ export function useTrailDashboardQueries(params: {
 
     return {
       type: 'FeatureCollection',
-      features
+      features: features as GeoJSON.Feature<GeoJSON.LineString | GeoJSON.MultiLineString>[]
     }
   })
 

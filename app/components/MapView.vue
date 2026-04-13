@@ -74,10 +74,19 @@ const style = '/map/style.json'
 const center: [number, number] = [13.0867, 47.7239]
 const zoom = 13
 
-const trailGeoJson = computed(() => ({
-  type: 'FeatureCollection',
-  features: props.trails
-    .filter(t => t.geometry_geojson)
+type TrailGeoJsonProperties = {
+  id: string
+  name: string
+  source: string
+}
+
+type TrailGeoJsonFeature = GeoJSON.Feature<GeoJSON.MultiLineString, TrailGeoJsonProperties>
+
+const trailGeoJson = computed<GeoJSON.FeatureCollection<GeoJSON.MultiLineString, TrailGeoJsonProperties>>(() => {
+  const features = props.trails
+    .filter((trail): trail is TrailListItemDto & { geometry_geojson: GeoJSON.MultiLineString } =>
+      Boolean(trail.geometry_geojson)
+    )
     .map(trail => ({
       type: 'Feature',
       properties: {
@@ -85,13 +94,18 @@ const trailGeoJson = computed(() => ({
         name: trail.name,
         source: trail.source
       },
-      geometry: trail.geometry_geojson
-    }))
-}))
+      geometry: trail.geometry_geojson as GeoJSON.MultiLineString
+    })) as TrailGeoJsonFeature[]
+
+  return {
+    type: 'FeatureCollection',
+    features
+  }
+})
 
 const effectiveHoveredTrailId = computed(() => props.hoveredTrailIdFromList ?? hoveredTrailId.value)
 
-const trailPaint = computed(() => ({
+const trailPaint = computed<Record<string, unknown>>(() => ({
   'line-color': [
     'case',
     ['==', ['get', 'id'], props.selectedTrailId],
@@ -204,9 +218,10 @@ watch(
 
     const trail = props.trails.find(t => t.id === id)
     const coords = trail?.geometry_geojson?.coordinates
-    if (!coords?.length) return
+    if (!coords?.length || !coords[0]?.length) return
 
-    const bounds = new maplibregl.LngLatBounds(coords[0][0], coords[0][0])
+    const firstCoord = coords[0][0] as [number, number]
+    const bounds = new maplibregl.LngLatBounds(firstCoord, firstCoord)
     coords.forEach((line) => {
       line.forEach(coord => bounds.extend(coord as [number, number]))
     })
