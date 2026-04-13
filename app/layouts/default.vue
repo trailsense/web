@@ -12,8 +12,22 @@
         />
       </template>
 
+      <div class="px-3 pt-3">
+        <UTabs
+          v-model="viewMode"
+          :content="false"
+          :items="viewItems"
+          size="xs"
+          variant="pill"
+          color="primary"
+        />
+      </div>
+
       <div class="py-2">
-        <slot name="sidebar" />
+        <slot
+          name="sidebar"
+          :view-mode="viewMode"
+        />
       </div>
 
       <template #footer="{ collapsed }">
@@ -38,6 +52,7 @@
         </div>
       </template>
     </UDashboardSidebar>
+
     <div class="flex-1">
       <UDashboardNavbar
         :toggle="false"
@@ -56,7 +71,16 @@
         </template>
       </UDashboardNavbar>
 
-      <slot />
+      <slot :view-mode="viewMode" />
     </div>
   </UDashboardGroup>
 </template>
+
+<script setup lang="ts">
+const viewMode = useState<'nodes' | 'trails'>('dashboard:viewMode', () => 'nodes')
+
+const viewItems = [
+  { label: 'Nodes', value: 'nodes' },
+  { label: 'Trails', value: 'trails' }
+]
+</script>
