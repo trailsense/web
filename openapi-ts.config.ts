@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [
     '@hey-api/typescript',
     '@hey-api/sdk',
-    '@hey-api/client-ofetch',
+    {
+      name: '@hey-api/client-ofetch',
+      baseUrl: false,
+      runtimeConfigPath: '~/lib/api-client-config'
+    },
     '@pinia/colada',
     '@hey-api/schemas'
   ]
