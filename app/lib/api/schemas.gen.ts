@@ -14,6 +14,34 @@ export const ErrorResponseSchema = {
     }
 } as const;
 
+export const GeoJsonMultiLineStringSchema = {
+    type: 'object',
+    required: [
+        'type',
+        'coordinates'
+    ],
+    properties: {
+        coordinates: {
+            type: 'array',
+            items: {
+                type: 'array',
+                items: {
+                    type: 'array',
+                    items: {
+                        type: 'number',
+                        format: 'double'
+                    }
+                }
+            },
+            description: 'GeoJSON coordinates in `[longitude, latitude]`.'
+        },
+        type: {
+            type: 'string',
+            example: 'MultiLineString'
+        }
+    }
+} as const;
+
 export const IngestAcceptedResponseSchema = {
     type: 'object',
     required: [
@@ -129,6 +157,78 @@ export const TimeseriesPointDtoSchema = {
         },
         total_count: {
             type: 'integer',
+            format: 'int64'
+        }
+    }
+} as const;
+
+export const TrailDetailDtoSchema = {
+    type: 'object',
+    required: [
+        'id',
+        'source',
+        'name',
+        'tags'
+    ],
+    properties: {
+        geometry_geojson: {
+            $ref: '#/components/schemas/GeoJsonMultiLineString'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid'
+        },
+        name: {
+            type: 'string'
+        },
+        source: {
+            type: 'string'
+        },
+        source_id: {
+            type: [
+                'integer',
+                'null'
+            ],
+            format: 'int64'
+        },
+        tags: {
+            type: 'object',
+            additionalProperties: {
+                type: 'string'
+            },
+            propertyNames: {
+                type: 'string'
+            }
+        }
+    }
+} as const;
+
+export const TrailListItemDtoSchema = {
+    type: 'object',
+    required: [
+        'id',
+        'source',
+        'name'
+    ],
+    properties: {
+        geometry_geojson: {
+            $ref: '#/components/schemas/GeoJsonMultiLineString'
+        },
+        id: {
+            type: 'string',
+            format: 'uuid'
+        },
+        name: {
+            type: 'string'
+        },
+        source: {
+            type: 'string'
+        },
+        source_id: {
+            type: [
+                'integer',
+                'null'
+            ],
             format: 'int64'
         }
     }
