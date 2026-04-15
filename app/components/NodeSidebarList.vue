@@ -1,26 +1,26 @@
 <template>
   <div class="py-2">
-    <p class="px-3 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-      Trail Nodes
+    <p class="px-4 pb-2 font-body-small text-muted">
+      Available Nodes
     </p>
 
     <p
       v-if="isLoading"
-      class="px-3 py-2 text-sm text-gray-500"
+      class="px-4 py-2 text-sm text-muted"
     >
       Loading nodes...
     </p>
 
     <p
       v-else-if="errorText"
-      class="px-3 py-2 text-sm text-red-600"
+      class="px-4 py-2 text-sm text-red-600"
     >
       {{ errorText }}
     </p>
 
     <p
       v-else-if="nodes.length === 0"
-      class="px-3 py-2 text-sm text-gray-500"
+      class="px-4 py-2 text-sm text-muted"
     >
       No nodes available.
     </p>

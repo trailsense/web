@@ -3,20 +3,48 @@
 
 :root {
   color-scheme: light;
+  --font-inter: "Inter", sans-serif;
+  --sidebar-bg: #f8f8f8;
+  --color-lightgrey: #ededed;
+  --color-white: #ffffff;
+  --color-muted: #929292;
+  --color-primary: #80d7b7;
+  --color-dark: #1c1c1c;
+  --color-lightpurple: #e5d4fe;
+  --color-mediumgrey: #d8d8d8;
 }
 
-@theme static {
-  --font-sans: 'Public Sans', sans-serif;
+.font-body-normal {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+}
 
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+.font-body-small {
+  font-family: var(--font-inter);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.font-body-tiny {
+  font-family: var(--font-inter);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.font-h1 {
+  font-family: var(--font-inter);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.font-h3 {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: normal;
 }
