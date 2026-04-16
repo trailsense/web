@@ -1,18 +1,13 @@
 <template>
   <div
-    class="flex items-start gap-3 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+    class="mx-4 flex cursor-pointer items-start gap-3 rounded-xl border border-(--color-lightgrey) bg-white px-3 py-3  hover:border-(--color-mediumgrey)"
     @click="$emit('select', node.id)"
   >
-    <span
-      class="mt-1 h-2.5 w-2.5 rounded-full shrink-0"
-      :class="statusClass"
-    />
-
     <div class="min-w-0">
-      <p class="font-medium text-sm truncate">
+      <p class="font-body-normal truncate text-(--color-dark) pb-2">
         {{ node.name }}
       </p>
-      <p class="text-xs text-gray-500 truncate">
+      <p class="font-body-small truncate text-(--color-muted)">
         Every {{ node.send_frequency_seconds }}s
       </p>
     </div>
@@ -20,18 +15,13 @@
 </template>
 
 <script setup lang="ts">
-import { getNodeStatusClass } from '~/utils/node-status'
 import type { NodeDto } from '~/lib/api/types.gen'
 
 defineEmits<{
   (e: 'select', nodeId: string): void
 }>()
 
-const props = defineProps<{
+defineProps<{
   node: NodeDto
 }>()
-
-const statusClass = computed(() => {
-  return getNodeStatusClass(props.node.status)
-})
 </script>

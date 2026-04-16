@@ -1,6 +1,6 @@
 <template>
   <div class="py-2">
-    <p class="px-4 pb-2 font-body-small text-muted">
+    <p class="px-4 pb-4 font-body-small text-muted">
       Available Nodes
     </p>
 
@@ -27,7 +27,7 @@
 
     <div
       v-else
-      class="space-y-1"
+      class="space-y-3"
     >
       <NodeListItem
         v-for="node in nodes"

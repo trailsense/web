@@ -6,7 +6,7 @@
 
     <aside
       class="absolute left-4 top-4 z-40 flex overflow-hidden rounded-3xl border border-default bg-(--sidebar-bg) shadow-sm backdrop-blur transition-all duration-300 ease-in-out"
-      :class="isSidebarCollapsed ? 'w-[min(20rem,calc(100%-1.5rem))] flex-col' : 'bottom-4 h-auto w-[min(20rem,calc(100%-1.5rem))] flex-col'"
+      :class="isSidebarCollapsed ? 'w-[min(22rem,calc(100%-1.5rem))] flex-col' : 'bottom-4 h-auto w-[min(22rem,calc(100%-1.5rem))] flex-col'"
     >
       <div class="flex w-full items-center justify-between gap-2 px-4 py-4">
         <AppLogo
