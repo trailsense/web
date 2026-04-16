@@ -7,8 +7,7 @@ export default defineNuxtConfig({
     'nuxt-maplibre',
     '@pinia/nuxt',
     '@pinia/colada-nuxt',
-    '@clerk/nuxt',
-    'nuxt-charts'
+    '@clerk/nuxt'
   ],
 
   ssr: false,

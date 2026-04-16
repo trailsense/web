@@ -47,7 +47,7 @@ export const addMeasurement = <ThrowOnError extends boolean = false>(options: Op
 
 export const measurementTimeseries = <ThrowOnError extends boolean = false>(options: Options<MeasurementTimeseriesData, ThrowOnError>) => (options.client ?? client).get<MeasurementTimeseriesResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/measurements/timeseries',
+    url: '/measurements/nodes/{node_id}/timeseries',
     ...options
 });
 

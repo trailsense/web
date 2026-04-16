@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative h-screen w-full overflow-hidden [--layout-gap:1rem] [--sidebar-width:min(22rem,calc(100%-1.5rem))]"
+    class="relative h-screen w-full overflow-hidden [--layout-gap:1rem] [--sidebar-width:min(22rem,calc(100%-1.5rem))] [--bottom-card-height:8rem]"
   >
     <div class="h-full w-full">
       <slot :view-mode="viewMode" />
@@ -70,6 +70,16 @@
         </div>
       </div>
     </aside>
+
+    <div
+      class="pointer-events-none absolute left-[var(--layout-gap)] right-[var(--layout-gap)] z-[46]"
+      :class="!isSidebarCollapsed ? 'lg:left-[calc(var(--layout-gap)+var(--sidebar-width)+var(--layout-gap))]' : ''"
+      style="bottom: calc(var(--layout-gap) + var(--bottom-card-height) + 0.5rem);"
+    >
+      <div class="pointer-events-auto">
+        <slot name="bottom-card-controls" />
+      </div>
+    </div>
 
     <FloatingBottomCard :sidebar-collapsed="isSidebarCollapsed">
       <slot

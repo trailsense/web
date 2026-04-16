@@ -1,5 +1,10 @@
 import { useQuery } from '@pinia/colada'
-import { listNodesQuery, listTrailsQuery, measurementTimeseriesQuery } from '~/lib/api/@pinia/colada.gen'
+import {
+  listNodesQuery,
+  listTrailsQuery,
+  measurementTimeseriesQuery,
+  trailMeasurementTimeseriesQuery
+} from '~/lib/api/@pinia/colada.gen'
 import type { NodeDto, TimeseriesBucket, TimeseriesPointDto, TrailListItemDto } from '~/lib/api/types.gen'
 
 type ApiArrayEnvelope<T> = {
@@ -42,9 +47,13 @@ type GeoJSONFeatureCollection = GeoJSON.FeatureCollection<
 
 export function useTrailDashboardQueries(params: {
   selectedNodeId: Ref<string | null>
-  bucket: Ref<TimeseriesBucket>
-  rangeFrom: Ref<string>
-  rangeTo: Ref<string>
+  selectedTrailId: Ref<string | null>
+  timelineBucket: Ref<TimeseriesBucket>
+  timelineRangeFrom: Ref<string>
+  timelineRangeTo: Ref<string>
+  drilldownBucket: Ref<TimeseriesBucket>
+  selectedBucketRangeFrom: Ref<string | null>
+  selectedBucketRangeTo: Ref<string | null>
   trailBbox: Ref<{
     min_lon: number
     min_lat: number
@@ -65,27 +74,133 @@ export function useTrailDashboardQueries(params: {
     nodes.value.find(node => node.id === params.selectedNodeId.value) ?? null
   )
 
-  const timeseriesQuery = useQuery(() => ({
-    ...measurementTimeseriesQuery({
-      query: {
-        node_id: params.selectedNodeId.value ?? '',
-        bucket: params.bucket.value,
-        from: params.rangeFrom.value,
-        to: params.rangeTo.value
+  const timelineQuery = useQuery(() => {
+    if (params.selectedNodeId.value) {
+      return {
+        ...measurementTimeseriesQuery({
+          path: {
+            node_id: params.selectedNodeId.value
+          },
+          query: {
+            bucket: params.timelineBucket.value,
+            from: params.timelineRangeFrom.value,
+            to: params.timelineRangeTo.value
+          }
+        }),
+        enabled: true
       }
-    }),
-    enabled: Boolean(params.selectedNodeId.value)
-  }))
+    }
 
-  const points = computed(() =>
-    unwrapArray<TimeseriesPointDto>(timeseriesQuery.data.value).map(point => ({
+    if (params.selectedTrailId.value) {
+      return {
+        ...trailMeasurementTimeseriesQuery({
+          path: {
+            trail_id: params.selectedTrailId.value
+          },
+          query: {
+            bucket: params.timelineBucket.value,
+            from: params.timelineRangeFrom.value,
+            to: params.timelineRangeTo.value
+          }
+        }),
+        enabled: true
+      }
+    }
+
+    return {
+      ...measurementTimeseriesQuery({
+        path: {
+          node_id: '__disabled__'
+        },
+        query: {
+          bucket: params.timelineBucket.value,
+          from: params.timelineRangeFrom.value,
+          to: params.timelineRangeTo.value
+        }
+      }),
+      enabled: false
+    }
+  })
+
+  const timelinePoints = computed(() =>
+    unwrapArray<TimeseriesPointDto>(timelineQuery.data.value).map(point => ({
+      timestamp: point.bucket_start,
+      value: point.total_count
+    }))
+  )
+
+  const activityQuery = useQuery(() => {
+    if (!params.selectedBucketRangeFrom.value || !params.selectedBucketRangeTo.value) {
+      return {
+        ...measurementTimeseriesQuery({
+          path: {
+            node_id: '__disabled__'
+          },
+          query: {
+            bucket: params.drilldownBucket.value,
+            from: params.timelineRangeFrom.value,
+            to: params.timelineRangeTo.value
+          }
+        }),
+        enabled: false
+      }
+    }
+
+    if (params.selectedNodeId.value) {
+      return {
+        ...measurementTimeseriesQuery({
+          path: {
+            node_id: params.selectedNodeId.value
+          },
+          query: {
+            bucket: params.drilldownBucket.value,
+            from: params.selectedBucketRangeFrom.value,
+            to: params.selectedBucketRangeTo.value
+          }
+        }),
+        enabled: true
+      }
+    }
+
+    if (params.selectedTrailId.value) {
+      return {
+        ...trailMeasurementTimeseriesQuery({
+          path: {
+            trail_id: params.selectedTrailId.value
+          },
+          query: {
+            bucket: params.drilldownBucket.value,
+            from: params.selectedBucketRangeFrom.value,
+            to: params.selectedBucketRangeTo.value
+          }
+        }),
+        enabled: true
+      }
+    }
+
+    return {
+      ...measurementTimeseriesQuery({
+        path: {
+          node_id: '__disabled__'
+        },
+        query: {
+          bucket: params.drilldownBucket.value,
+          from: params.timelineRangeFrom.value,
+          to: params.timelineRangeTo.value
+        }
+      }),
+      enabled: false
+    }
+  })
+
+  const activityPoints = computed(() =>
+    unwrapArray<TimeseriesPointDto>(activityQuery.data.value).map(point => ({
       timestamp: point.bucket_start,
       value: point.total_count
     }))
   )
 
   const trailsQuery = useQuery(() => {
-    console.log('Trail bbox for query:', params.trailBbox.value)
     const bbox = params.trailBbox.value
 
     if (!bbox) {
@@ -134,11 +249,13 @@ export function useTrailDashboardQueries(params: {
   })
 
   return {
+    activityPoints,
+    activityQuery,
     nodes,
     nodesQuery,
-    points,
     selectedNode,
-    timeseriesQuery,
+    timelinePoints,
+    timelineQuery,
     trails,
     trailsQuery,
     trailsGeoJson

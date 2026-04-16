@@ -200,12 +200,13 @@ export type AddMeasurementResponse = AddMeasurementResponses[keyof AddMeasuremen
 
 export type MeasurementTimeseriesData = {
     body?: never;
-    path?: never;
-    query: {
+    path: {
         /**
-         * Node identifier to aggregate measurements for.
+         * Node ID
          */
         node_id: string;
+    };
+    query: {
         /**
          * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
          */
@@ -219,7 +220,7 @@ export type MeasurementTimeseriesData = {
          */
         to: string;
     };
-    url: '/measurements/timeseries';
+    url: '/measurements/nodes/{node_id}/timeseries';
 };
 
 export type MeasurementTimeseriesResponses = {

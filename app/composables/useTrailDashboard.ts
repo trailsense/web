@@ -1,7 +1,8 @@
 import { useTrailDashboardQueries } from './trail-dashboard/queries'
-import { useTrailDashboardTimeframeState } from './trail-dashboard/timeframe-state'
+import { useTrailDashboardTimelineState } from './trail-dashboard/timeframe-state'
+import type { TrailListItemDto } from '~/lib/api/types.gen'
 
-export type { DashboardPeriod } from './trail-dashboard/types'
+export type { DashboardGranularity } from './trail-dashboard/types'
 
 export const TRAIL_DASHBOARD_KEY = 'trail-dashboard'
 
@@ -13,6 +14,8 @@ export function useTrailDashboard() {
     const nodeId = route.query.node
     return typeof nodeId === 'string' && nodeId.length > 0 ? nodeId : null
   })
+  const selectedTrailId = useState<string | null>('dashboard:selectedTrailId', () => null)
+  const selectedTrailSnapshot = useState<TrailListItemDto | null>('dashboard:selectedTrailSnapshot', () => null)
 
   const trailBbox = useState<{
     min_lon: number
@@ -25,28 +28,74 @@ export function useTrailDashboard() {
     trailBbox.value = bbox
   }
 
-  const timeframe = useTrailDashboardTimeframeState()
-  const { bucket, rangeFrom, rangeTo } = timeframe
+  const timeline = useTrailDashboardTimelineState()
+  const {
+    drilldownBucket,
+    selectedBucketRangeFrom,
+    selectedBucketRangeTo,
+    setTimelineBuckets,
+    timelineBucket,
+    timelineRangeFrom,
+    timelineRangeTo
+  } = timeline
 
   const {
+    activityPoints,
+    activityQuery,
     nodes,
     nodesQuery,
-    points,
     selectedNode,
-    timeseriesQuery,
+    timelinePoints,
+    timelineQuery,
     trails,
     trailsQuery,
     trailsGeoJson
   } = useTrailDashboardQueries({
+    drilldownBucket,
+    selectedBucketRangeFrom,
+    selectedBucketRangeTo,
     selectedNodeId,
-    bucket,
-    rangeFrom,
-    rangeTo,
-    trailBbox
+    selectedTrailId,
+    trailBbox,
+    timelineBucket,
+    timelineRangeFrom,
+    timelineRangeTo
+  })
+
+  const selectedTrail = computed(() => {
+    if (!selectedTrailId.value) return null
+
+    const fromCurrentList = trails.value.find(trail => trail.id === selectedTrailId.value) ?? null
+    if (fromCurrentList) return fromCurrentList
+
+    if (selectedTrailSnapshot.value?.id === selectedTrailId.value) {
+      return selectedTrailSnapshot.value
+    }
+
+    return null
   })
 
   const selectNode = (nodeId: string | null) => {
     selectedNodeId.value = nodeId
+
+    if (nodeId) {
+      selectedTrailId.value = null
+      selectedTrailSnapshot.value = null
+    }
+  }
+
+  const selectTrail = (trailId: string | null) => {
+    selectedTrailId.value = trailId
+
+    if (trailId) {
+      selectedNodeId.value = null
+      const found = trails.value.find(trail => trail.id === trailId)
+      if (found) {
+        selectedTrailSnapshot.value = found
+      }
+    } else {
+      selectedTrailSnapshot.value = null
+    }
   }
 
   watch(
@@ -55,6 +104,10 @@ export function useTrailDashboard() {
       const fromQuery = typeof nodeId === 'string' && nodeId.length > 0 ? nodeId : null
       if (fromQuery !== selectedNodeId.value) {
         selectedNodeId.value = fromQuery
+        if (fromQuery) {
+          selectedTrailId.value = null
+          selectedTrailSnapshot.value = null
+        }
       }
     }
   )
@@ -81,15 +134,32 @@ export function useTrailDashboard() {
     }
   })
 
+  watch(trails, (list) => {
+    if (!selectedTrailId.value) return
+    const found = list.find(trail => trail.id === selectedTrailId.value)
+    if (found) {
+      selectedTrailSnapshot.value = found
+    }
+  })
+
+  watch(timelinePoints, (points) => {
+    setTimelineBuckets(points.map(point => point.timestamp))
+  }, { immediate: true })
+
   return {
-    ...timeframe,
+    ...timeline,
+    activityPoints,
+    activityQuery,
     nodes,
     nodesQuery,
-    points,
     selectedNode,
     selectedNodeId,
     selectNode,
-    timeseriesQuery,
+    selectedTrail,
+    selectedTrailId,
+    selectTrail,
+    timelinePoints,
+    timelineQuery,
     trails,
     trailsQuery,
     trailsGeoJson,

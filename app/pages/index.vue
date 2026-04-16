@@ -39,6 +39,9 @@
     <template #bottom-card>
       <BottomCardLineChart />
     </template>
+    <template #bottom-card-controls>
+      <BottomTimelineGranularitySelect />
+    </template>
 
     <MapView
       :mode="viewMode"
@@ -72,7 +75,10 @@ const {
   nodes,
   nodesQuery,
   selectedNode,
+  selectedTrail,
+  selectedTrailId,
   selectNode,
+  selectTrail,
   trails
 } = dashboard
 
@@ -83,17 +89,11 @@ const hoveredNodeId = ref<string | null>(null)
 
 provide(TRAIL_DASHBOARD_KEY, dashboard)
 
-const selectedTrailId = ref<string | null>(null)
-
-const selectedTrail = computed(() =>
-  trails.value.find(t => t.id === selectedTrailId.value) ?? null
-)
-
 const viewMode = useState<'nodes' | 'trails'>('dashboard:viewMode')
 
 watch(viewMode, (newMode) => {
   if (newMode === 'nodes' && selectedTrailId.value) {
-    selectedTrailId.value = null
+    selectTrail(null)
   } else if (newMode === 'trails' && selectedNode.value) {
     selectNode(null)
   }
@@ -105,7 +105,7 @@ const selectNodeHandler = (id: string | null) => {
 }
 
 const selectTrailHandler = (id: string | null) => {
-  selectedTrailId.value = id
+  selectTrail(id)
   viewMode.value = 'trails'
 }
 
@@ -114,6 +114,6 @@ const backFromNode = () => {
 }
 
 const backFromTrail = () => {
-  selectedTrailId.value = null
+  selectTrail(null)
 }
 </script>

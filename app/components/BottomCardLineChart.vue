@@ -1,10 +1,13 @@
 <template>
   <ClientOnly>
-    <div
-      ref="chartEl"
-      class="h-25 w-full"
-      aria-label="Bottom card line chart"
-    />
+    <div class="w-full">
+      <div
+        ref="chartEl"
+        :class="hasSelection && !isTimelineLoading && !timelineErrorText && sortedPoints.length > 0 ? 'block' : 'hidden'"
+        aria-label="Bottom card timeline"
+        class="h-[88px] w-full"
+      />
+    </div>
   </ClientOnly>
 </template>
 
@@ -15,141 +18,124 @@ import {
   use,
   type EChartsType
 } from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, type LineSeriesOption } from 'echarts/charts'
 import {
   GraphicComponent,
   GridComponent,
   MarkLineComponent,
   TooltipComponent,
-  VisualMapComponent,
-  type GridComponentOption,
   type GraphicComponentOption,
-  type TooltipComponentOption,
-  type VisualMapComponentOption
+  type GridComponentOption,
+  type TooltipComponentOption
 } from 'echarts/components'
-import { onBeforeUnmount, onMounted, nextTick, ref } from 'vue'
-
-use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, VisualMapComponent, GraphicComponent, MarkLineComponent])
+import { CanvasRenderer } from 'echarts/renderers'
+import type { TrailDashboardState } from '~/composables/useTrailDashboard'
+import { TRAIL_DASHBOARD_KEY } from '~/composables/useTrailDashboard'
 
 type EChartsOption = ComposeOption<
   | LineSeriesOption
   | GridComponentOption
   | GraphicComponentOption
   | TooltipComponentOption
-  | VisualMapComponentOption
 >
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, GraphicComponent, MarkLineComponent])
+
+const dashboard = inject<TrailDashboardState>(TRAIL_DASHBOARD_KEY)
+
+if (!dashboard) {
+  throw new Error('Trail dashboard state is not available.')
+}
+
+const {
+  activeMarkerId,
+  selectedNodeId,
+  selectedTrailId,
+  setActiveMarker,
+  granularity,
+  timelinePoints,
+  timelineQuery
+} = dashboard
 
 const chartEl = ref<HTMLDivElement | null>(null)
 let chart: EChartsType | null = null
 let resizeObserver: ResizeObserver | null = null
-let rafId: number | null = null
 let isDraggingSelection = false
 
-type DayPoint = {
-  value: [string, number]
-  displayDate: string
-}
+const hasSelection = computed(() =>
+  Boolean(selectedNodeId.value || selectedTrailId.value)
+)
+const isTimelineLoading = computed(() =>
+  hasSelection.value && (timelineQuery.isLoading.value || timelineQuery.isPending.value)
+)
+const timelineErrorText = computed(() =>
+  hasSelection.value && timelineQuery.error.value ? 'Failed to load timeline.' : ''
+)
 
-const dayPoints: DayPoint[] = (() => {
-  const points: DayPoint[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+const sortedPoints = computed(() =>
+  [...timelinePoints.value].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+)
+const dateList = computed(() => sortedPoints.value.map(point => point.timestamp))
+const valueList = computed(() => sortedPoints.value.map(point => point.value))
 
-  for (let i = 0; i < 365; i += 1) {
-    const date = new Date(today)
-    date.setDate(today.getDate() - (364 - i))
-
-    const isoDate = date.toISOString().slice(0, 10)
-    const displayDate = date.toLocaleDateString([], {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
-
-    const baseline = 10
-    const trend = (i / 364) * 6
-    const seasonal = Math.sin(i / 14) * 2 + Math.cos(i / 33) * 1.2
-    const value = Number((baseline + trend + seasonal).toFixed(2))
-
-    points.push({
-      value: [isoDate, value],
-      displayDate
-    })
-  }
-
-  return points
-})()
-
-const dateList = dayPoints.map(point => point.value[0])
-const valueList = dayPoints.map(point => point.value[1])
-let selectedDayIndex = dateList.length - 1
-
-const minValue = Math.min(...valueList)
-const maxValue = Math.max(...valueList)
+const selectedIndex = computed(() => {
+  if (!activeMarkerId.value) return -1
+  return dateList.value.findIndex(date => date === activeMarkerId.value)
+})
 
 const grid = {
-  left: 16,
-  right: 16,
-  top: 10,
+  left: 8,
+  right: 8,
+  top: 4,
   bottom: 10
 }
 
-const onWindowResize = () => {
-  chart?.resize()
+const formatBucketLabel = (timestamp: string) => {
+  const date = new Date(timestamp)
+  if (granularity.value === 'week') {
+    return `Week of ${date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}`
+  }
+
+  return date.toLocaleDateString([], {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
 const getSeries = (): LineSeriesOption => ({
-  id: 'activity-series',
-  name: 'Activity',
+  id: 'timeline-series',
   type: 'line',
   smooth: false,
-  data: valueList,
-  showAllSymbol: true,
+  data: valueList.value,
   showSymbol: true,
   symbol: 'circle',
   symbolSize: 3,
   lineStyle: {
-    width: 2
+    width: 2,
+    color: '#80d7b7'
   },
-  markLine: {
-    silent: true,
-    symbol: ['none', 'none'],
-    lineStyle: {
-      color: '#1c1c1c',
-      width: 1,
-      opacity: 0.7
-    },
-    label: { show: false },
-    data: [{ xAxis: dateList[selectedDayIndex] }]
-  }
+  itemStyle: {
+    color: '#80d7b7'
+  },
+  markLine: selectedIndex.value >= 0
+    ? {
+        silent: true,
+        symbol: ['none', 'none'],
+        lineStyle: {
+          color: '#1c1c1c',
+          width: 1,
+          opacity: 0.6
+        },
+        label: { show: false },
+        data: [{ xAxis: dateList.value[selectedIndex.value] }]
+      }
+    : undefined
 })
 
-const option: EChartsOption = {
-  animationDuration: 500,
-  visualMap: [
-    {
-      show: false,
-      type: 'continuous',
-      seriesIndex: 0,
-      min: minValue,
-      max: maxValue,
-      inRange: {
-        color: ['#9ca3af', '#10b981']
-      }
-    },
-    {
-      show: false,
-      type: 'continuous',
-      seriesIndex: 0,
-      dimension: 0,
-      min: 0,
-      max: dateList.length - 1,
-      inRange: {
-        color: ['#10b981', '#047857']
-      }
-    }
-  ],
+const chartOption = computed<EChartsOption>(() => ({
+  animationDuration: 200,
   grid: {
     left: grid.left,
     right: grid.right,
@@ -159,7 +145,7 @@ const option: EChartsOption = {
   },
   xAxis: {
     type: 'category',
-    data: dateList,
+    data: dateList.value,
     boundaryGap: false,
     axisLabel: { show: false },
     axisTick: { show: false },
@@ -187,79 +173,77 @@ const option: EChartsOption = {
       const list = params as Array<{ dataIndex?: number }>
       const dataIndex = list?.[0]?.dataIndex
       if (typeof dataIndex !== 'number') return ''
-      return dayPoints[dataIndex]?.displayDate ?? ''
+      const timestamp = dateList.value[dataIndex]
+      return timestamp ? formatBucketLabel(timestamp) : ''
     },
     position: (point, _params, _dom, _rect, size) => {
-      const x = point[0] - size.contentSize[0] / 2
+      const paddingX = 6
+      const rawX = point[0] - size.contentSize[0] / 2
+      const maxX = size.viewSize[0] - size.contentSize[0] - paddingX
+      const x = Math.max(paddingX, Math.min(rawX, maxX))
       const y = size.viewSize[1] - size.contentSize[1] - 6
       return [x, y]
     },
     extraCssText: 'border-radius: 9999px; line-height: 1.2; pointer-events: none;'
   },
   series: [getSeries()]
-}
+}))
 
-function getSelectedDayX() {
-  if (!chartEl.value) return null
+function getSelectedMarkerX() {
+  if (!chartEl.value || selectedIndex.value < 0 || dateList.value.length <= 1) return null
   const width = chartEl.value.clientWidth
   const left = grid.left
   const right = width - grid.right
-  if (right <= left || dateList.length <= 1) return null
-  const ratio = selectedDayIndex / (dateList.length - 1)
+  if (right <= left) return null
+  const ratio = selectedIndex.value / (dateList.value.length - 1)
   return left + ratio * (right - left)
 }
 
 function indexFromPixelX(pixelX: number) {
-  if (!chartEl.value) return selectedDayIndex
+  if (!chartEl.value || dateList.value.length === 0) return -1
+  if (dateList.value.length === 1) return 0
 
   const width = chartEl.value.clientWidth
   const left = grid.left
   const right = width - grid.right
-  if (right <= left) return selectedDayIndex
+  if (right <= left) return selectedIndex.value
 
   const clampedX = Math.min(right, Math.max(left, pixelX))
   const ratio = (clampedX - left) / (right - left)
-  const index = Math.round(ratio * (dateList.length - 1))
-  return Math.min(dateList.length - 1, Math.max(0, index))
+  const index = Math.round(ratio * (dateList.value.length - 1))
+  return Math.min(dateList.value.length - 1, Math.max(0, index))
 }
 
-function isWithinInteractiveBand(pixelY: number) {
-  const height = chartEl.value?.clientHeight
-  if (!height) return false
+function selectMarkerFromPixel(pixelX: number) {
+  const index = indexFromPixelX(pixelX)
+  if (index < 0) return
 
-  const top = grid.top - 8
-  const bottom = height - grid.bottom + 8
-
-  return pixelY >= top && pixelY <= bottom
+  const markerId = dateList.value[index]
+  if (!markerId || markerId === activeMarkerId.value) return
+  setActiveMarker(markerId)
 }
 
-function selectDayFromPixel(pixelX: number) {
-  const nextIndex = indexFromPixelX(pixelX)
-  if (nextIndex === selectedDayIndex) return
-
-  selectedDayIndex = nextIndex
-  updateFixedSelectionVisuals()
-}
-
-function updateFixedSelectionVisuals() {
+function updateSelectionGraphics() {
   if (!chart) return
-
-  const x = getSelectedDayX()
-  if (x === null) return
+  const selectedX = getSelectedMarkerX()
+  if (selectedX === null || selectedIndex.value < 0) {
+    chart.setOption({ graphic: [] })
+    return
+  }
 
   const height = chartEl.value?.clientHeight ?? 100
   const lineBottom = height - grid.bottom
+  const selectedTimestamp = dateList.value[selectedIndex.value]
 
   chart.setOption({
-    series: [getSeries()],
     graphic: [
       {
-        id: 'selected-day-handle',
+        id: 'selected-marker-handle',
         type: 'circle',
         shape: {
-          cx: x,
+          cx: selectedX,
           cy: lineBottom,
-          r: 5
+          r: 4
         },
         style: {
           fill: '#1c1c1c'
@@ -268,12 +252,12 @@ function updateFixedSelectionVisuals() {
         z: 110
       },
       {
-        id: 'selected-day-bubble',
+        id: 'selected-marker-label',
         type: 'text',
-        x,
+        x: selectedX,
         y: lineBottom,
         style: {
-          text: dayPoints[selectedDayIndex]?.displayDate ?? '',
+          text: selectedTimestamp ? formatBucketLabel(selectedTimestamp) : '',
           fill: '#ffffff',
           backgroundColor: '#1c1c1c',
           padding: [4, 8],
@@ -289,40 +273,29 @@ function updateFixedSelectionVisuals() {
   })
 }
 
-function ensureChartInitialized() {
-  if (!chartEl.value || chart) return
-
-  const { clientWidth, clientHeight } = chartEl.value
-
-  if (clientWidth === 0 || clientHeight === 0) {
-    rafId = window.requestAnimationFrame(ensureChartInitialized)
-    return
-  }
-
-  chart = init(chartEl.value, undefined, { renderer: 'canvas' })
-  chart.setOption(option)
-  updateFixedSelectionVisuals()
-
+function bindChartInteraction() {
+  if (!chart) return
   const zr = chart.getZr()
 
+  zr.off('click')
+  zr.off('mousedown')
+  zr.off('mousemove')
+  zr.off('mouseup')
+  zr.off('globalout')
+
   zr.on('click', (event) => {
-    if (!isWithinInteractiveBand(event.offsetY)) return
-    selectDayFromPixel(event.offsetX)
+    selectMarkerFromPixel(event.offsetX)
   })
 
   zr.on('mousedown', (event) => {
-    if (!isWithinInteractiveBand(event.offsetY)) return
-    const x = getSelectedDayX()
-    if (x === null) return
-    isDraggingSelection = Math.abs(event.offsetX - x) <= 10
+    const markerX = getSelectedMarkerX()
+    if (markerX === null) return
+    isDraggingSelection = Math.abs(event.offsetX - markerX) <= 10
   })
 
   zr.on('mousemove', (event) => {
     if (!isDraggingSelection) return
-    const nextIndex = indexFromPixelX(event.offsetX)
-    if (nextIndex === selectedDayIndex) return
-    selectedDayIndex = nextIndex
-    updateFixedSelectionVisuals()
+    selectMarkerFromPixel(event.offsetX)
   })
 
   zr.on('mouseup', () => {
@@ -334,32 +307,70 @@ function ensureChartInitialized() {
   })
 }
 
-onMounted(() => {
-  nextTick(() => {
-    ensureChartInitialized()
+function ensureChartInitialized() {
+  if (!chartEl.value) return
+  if (chart) return
+  chart = init(chartEl.value, undefined, { renderer: 'canvas' })
+  bindChartInteraction()
+}
 
-    if (!chartEl.value) return
+function renderChart() {
+  if (!chartEl.value || sortedPoints.value.length === 0 || isTimelineLoading.value || timelineErrorText.value || !hasSelection.value) {
+    return
+  }
 
-    resizeObserver = new ResizeObserver(() => {
-      chart?.resize()
-      updateFixedSelectionVisuals()
-    })
+  ensureChartInitialized()
+  chart?.setOption(chartOption.value, true)
+  updateSelectionGraphics()
+}
 
-    resizeObserver.observe(chartEl.value)
-    window.addEventListener('resize', onWindowResize)
+function setupResizeObserver() {
+  if (!chartEl.value) return
+  if (resizeObserver) return
+
+  resizeObserver = new ResizeObserver(() => {
+    chart?.resize()
+    updateSelectionGraphics()
   })
+
+  resizeObserver.observe(chartEl.value)
+}
+
+watch(
+  () => [
+    hasSelection.value,
+    isTimelineLoading.value,
+    timelineErrorText.value,
+    sortedPoints.value.length,
+    activeMarkerId.value,
+    granularity.value
+  ],
+  async () => {
+    await nextTick()
+    renderChart()
+  },
+  { immediate: true }
+)
+
+watch(chartOption, () => {
+  renderChart()
+})
+
+onMounted(() => {
+  setupResizeObserver()
+  renderChart()
+})
+
+watch(chartEl, () => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  setupResizeObserver()
+  renderChart()
 })
 
 onBeforeUnmount(() => {
-  if (rafId !== null) {
-    window.cancelAnimationFrame(rafId)
-    rafId = null
-  }
-
   resizeObserver?.disconnect()
   resizeObserver = null
-
-  window.removeEventListener('resize', onWindowResize)
 
   chart?.dispose()
   chart = null
