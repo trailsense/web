@@ -49,7 +49,7 @@ const chartData = computed<ChartDatum[]>(() =>
 )
 
 const chartCategories = computed(() => ({
-  count: { name: 'Measurements', color: '#10b981' }
+  count: { name: 'Measurements', color: '#5cc89f' }
 }))
 
 const xFormatter = (index: number) => chartData.value[index]?.axisLabel || ''
@@ -57,24 +57,24 @@ const yFormatter = (tick: number) => tick.toString()
 </script>
 
 <template>
-  <div class="space-y-2 rounded-lg border border-gray-200 p-3">
+  <div class="space-y-2 rounded-lg border border-default p-3">
     <p
       v-if="isLoading"
-      class="text-sm text-gray-500"
+      class="text-sm text-muted"
     >
       Loading measurements...
     </p>
 
     <p
       v-else-if="errorText"
-      class="text-sm text-red-600"
+      class="text-sm text-error"
     >
       {{ errorText }}
     </p>
 
     <p
       v-else-if="chartData.length === 0"
-      class="text-sm text-gray-500"
+      class="text-sm text-muted"
     >
       No measurements in the selected range.
     </p>
@@ -97,10 +97,10 @@ const yFormatter = (tick: number) => tick.toString()
           v-if="values"
           class="text-xs"
         >
-          <p class="font-medium text-gray-800">
+          <p class="font-medium text-highlighted">
             {{ values.hoverLabel }}
           </p>
-          <p class="text-gray-600">
+          <p class="text-toned">
             {{ values.count }} measurements
           </p>
         </div>

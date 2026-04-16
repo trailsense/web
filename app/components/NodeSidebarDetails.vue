@@ -13,7 +13,7 @@
       <h2 class="text-lg font-semibold">
         {{ node.name }}
       </h2>
-      <p class="text-sm text-gray-500">
+      <p class="text-sm text-muted">
         Node ID: {{ node.id }}
       </p>
     </div>
@@ -28,7 +28,7 @@
       </span>
     </div>
 
-    <div class="text-xs space-y-1 text-gray-500">
+    <div class="space-y-1 text-xs text-muted">
       <p><strong>Coordinates:</strong> {{ node.longitude }}, {{ node.latitude }}</p>
       <p><strong>Send frequency:</strong> Every {{ node.send_frequency_seconds }}s</p>
       <p><strong>Created:</strong> {{ formatDate(node.created_at) }}</p>
@@ -61,7 +61,7 @@
           variant="soft"
           @click="shiftPeriod(-1)"
         />
-        <p class="flex-1 text-center text-xs font-medium text-gray-700 truncate">
+        <p class="flex-1 truncate text-center text-xs font-medium text-toned">
           {{ periodLabel }}
         </p>
         <UButton

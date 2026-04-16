@@ -1,6 +1,7 @@
 <template>
   <section
-    class="absolute bottom-(--layout-gap) left-(--layout-gap) right-(--layout-gap) z-45 min-h-25 overflow-hidden rounded-3xl border border-default bg-(--sidebar-bg) shadow-sm backdrop-blur"
+    data-map-overlay="bottom-card"
+    class="absolute bottom-[var(--layout-gap)] left-[var(--layout-gap)] right-[var(--layout-gap)] z-45 min-h-25 overflow-hidden rounded-3xl border border-default bg-default shadow-sm backdrop-blur"
     :class="!sidebarCollapsed ? 'lg:left-[calc(var(--layout-gap)+var(--sidebar-width)+var(--layout-gap))]' : ''"
   >
     <div class="flex min-h-25 items-center px-4 py-3">

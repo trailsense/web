@@ -73,6 +73,17 @@ const hoveredTrailId = ref<string | null>(null)
 const style = '/map/style.json'
 const center: [number, number] = [13.0867, 47.7239]
 const zoom = 13
+const CAMERA_MARGIN = 24
+const EDGE_PROXIMITY = 28
+const EDGE_COVERAGE_RATIO = 0.35
+const EDGE_BAND_RATIO = 0.45
+
+type CameraPadding = {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
 
 type TrailGeoJsonProperties = {
   id: string
@@ -126,6 +137,71 @@ const trailPaint = computed<Record<string, unknown>>(() => ({
 
 function getMap() {
   return mapRef.value?.map
+}
+
+function getCameraPadding(): CameraPadding {
+  const map = getMap()
+
+  const padding: CameraPadding = {
+    top: CAMERA_MARGIN,
+    right: CAMERA_MARGIN,
+    bottom: CAMERA_MARGIN,
+    left: CAMERA_MARGIN
+  }
+
+  if (!map) return padding
+
+  const mapRect = map.getContainer().getBoundingClientRect()
+  const minVerticalCoverage = mapRect.height * EDGE_COVERAGE_RATIO
+  const minHorizontalCoverage = mapRect.width * EDGE_COVERAGE_RATIO
+
+  const overlays = Array.from(document.querySelectorAll<HTMLElement>('[data-map-overlay]'))
+
+  overlays.forEach((overlay) => {
+    const style = window.getComputedStyle(overlay)
+
+    if (style.display === 'none' || style.visibility === 'hidden') return
+
+    const rect = overlay.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+
+    const intersectLeft = Math.max(rect.left, mapRect.left)
+    const intersectTop = Math.max(rect.top, mapRect.top)
+    const intersectRight = Math.min(rect.right, mapRect.right)
+    const intersectBottom = Math.min(rect.bottom, mapRect.bottom)
+
+    if (intersectRight <= intersectLeft || intersectBottom <= intersectTop) return
+
+    const overlapWidth = intersectRight - intersectLeft
+    const overlapHeight = intersectBottom - intersectTop
+
+    const nearLeft = rect.left <= mapRect.left + EDGE_PROXIMITY
+    const nearRight = rect.right >= mapRect.right - EDGE_PROXIMITY
+    const nearTop = rect.top <= mapRect.top + EDGE_PROXIMITY
+    const nearBottom = rect.bottom >= mapRect.bottom - EDGE_PROXIMITY
+
+    if (nearLeft && overlapHeight >= minVerticalCoverage) {
+      const coverFromLeft = intersectRight - mapRect.left
+      padding.left = Math.max(padding.left, Math.ceil(coverFromLeft + CAMERA_MARGIN))
+    }
+
+    if (nearRight && overlapHeight >= minVerticalCoverage) {
+      const coverFromRight = mapRect.right - intersectLeft
+      padding.right = Math.max(padding.right, Math.ceil(coverFromRight + CAMERA_MARGIN))
+    }
+
+    if (nearTop && overlapWidth >= minHorizontalCoverage && overlapHeight <= mapRect.height * EDGE_BAND_RATIO) {
+      const coverFromTop = intersectBottom - mapRect.top
+      padding.top = Math.max(padding.top, Math.ceil(coverFromTop + CAMERA_MARGIN))
+    }
+
+    if (nearBottom && overlapWidth >= minHorizontalCoverage && overlapHeight <= mapRect.height * EDGE_BAND_RATIO) {
+      const coverFromBottom = mapRect.bottom - intersectTop
+      padding.bottom = Math.max(padding.bottom, Math.ceil(coverFromBottom + CAMERA_MARGIN))
+    }
+  })
+
+  return padding
 }
 
 function updateBbox() {
@@ -185,14 +261,7 @@ watch(
         zoom: 14,
         speed: 1,
         curve: 1.4,
-        essential: true
-      })
-    } else {
-      map.flyTo({
-        center,
-        zoom,
-        speed: 1,
-        curve: 1.4,
+        padding: getCameraPadding(),
         essential: true
       })
     }
@@ -205,16 +274,7 @@ watch(
     const map = getMap()
     if (!map) return
 
-    if (!id) {
-      map.flyTo({
-        center,
-        zoom,
-        speed: 1,
-        curve: 1.4,
-        essential: true
-      })
-      return
-    }
+    if (!id) return
 
     const trail = props.trails.find(t => t.id === id)
     const coords = trail?.geometry_geojson?.coordinates
@@ -226,7 +286,10 @@ watch(
       line.forEach(coord => bounds.extend(coord as [number, number]))
     })
 
-    map.fitBounds(bounds, { padding: 40, duration: 600 })
+    map.fitBounds(bounds, {
+      padding: getCameraPadding(),
+      duration: 600
+    })
   }
 )
 </script>

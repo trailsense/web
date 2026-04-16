@@ -1,12 +1,12 @@
 <template>
   <div class="py-2">
-    <p class="px-3 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+    <p class="px-3 pb-2 text-xs font-semibold text-muted uppercase tracking-wide">
       Trails
     </p>
 
     <div
       v-if="trails.length === 0"
-      class="px-3 py-6 text-sm text-gray-500"
+      class="px-3 py-6 text-sm text-muted"
     >
       No trails in current map view.
     </div>
@@ -18,7 +18,7 @@
       <div
         v-for="trail in trails"
         :key="trail.id"
-        class="px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer"
+        class="cursor-pointer rounded-md px-3 py-2 hover:bg-muted"
         @click="$emit('select', trail.id)"
         @mouseenter="$emit('hover', trail.id)"
         @mouseleave="$emit('leave')"
@@ -26,7 +26,7 @@
         <p class="text-sm font-medium">
           {{ trail.name }}
         </p>
-        <p class="text-xs text-gray-500">
+        <p class="text-xs text-muted">
           Source: {{ trail.source }}
         </p>
       </div>

@@ -1,13 +1,13 @@
 <template>
   <div
-    class="mx-4 flex cursor-pointer items-start gap-3 rounded-xl border border-(--color-lightgrey) bg-white px-3 py-3  hover:border-(--color-mediumgrey)"
+    class="mx-4 flex cursor-pointer items-start gap-3 rounded-xl border border-default bg-elevated px-3 py-3 hover:border-accented"
     @click="$emit('select', node.id)"
   >
     <div class="min-w-0">
-      <p class="font-body-normal truncate text-(--color-dark) pb-2">
+      <p class="font-body-normal truncate pb-2 text-highlighted">
         {{ node.name }}
       </p>
-      <p class="font-body-small truncate text-(--color-muted)">
+      <p class="font-body-small truncate text-muted">
         Every {{ node.send_frequency_seconds }}s
       </p>
     </div>

@@ -1,17 +1,65 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+@theme static {
+  --color-mist-50: #f8f8f8;
+  --color-mist-100: #ededed;
+  --color-mist-200: #e4e4e4;
+  --color-mist-300: #d8d8d8;
+  --color-mist-400: #c3c3c3;
+  --color-mist-500: #929292;
+  --color-mist-600: #747474;
+  --color-mist-700: #5c5c5c;
+  --color-mist-800: #3d3d3d;
+  --color-mist-900: #1c1c1c;
+  --color-mist-950: #111111;
+
+  --color-brand-50: #f3fbf8;
+  --color-brand-100: #e3f6ef;
+  --color-brand-200: #c1ecdd;
+  --color-brand-300: #9ee2cb;
+  --color-brand-400: #80d7b7;
+  --color-brand-500: #5cc89f;
+  --color-brand-600: #43ad86;
+  --color-brand-700: #338a6b;
+  --color-brand-800: #2d6d56;
+  --color-brand-900: #275b48;
+  --color-brand-950: #143429;
+
+  --color-lavender-50: #faf7ff;
+  --color-lavender-100: #f3edff;
+  --color-lavender-200: #e9ddff;
+  --color-lavender-300: #dcc8ff;
+  --color-lavender-400: #caa9ff;
+  --color-lavender-500: #b487ff;
+  --color-lavender-600: #9a63f2;
+  --color-lavender-700: #7e45d6;
+  --color-lavender-800: #6838ad;
+  --color-lavender-900: #57318b;
+  --color-lavender-950: #341b59;
+}
+
 :root {
   color-scheme: light;
   --font-inter: "Inter", sans-serif;
-  --sidebar-bg: #f8f8f8;
-  --color-lightgrey: #ededed;
-  --color-white: #ffffff;
-  --color-muted: #929292;
-  --color-primary: #80d7b7;
-  --color-dark: #1c1c1c;
-  --color-lightpurple: #e5d4fe;
-  --color-mediumgrey: #d8d8d8;
+
+  --ui-primary: var(--ui-color-primary-400);
+  --ui-secondary: var(--ui-color-secondary-400);
+
+  --ui-bg: var(--ui-color-neutral-50);
+  --ui-bg-muted: var(--ui-color-neutral-100);
+  --ui-bg-elevated: #ffffff;
+  --ui-bg-accented: var(--ui-color-neutral-200);
+
+  --ui-border: var(--ui-color-neutral-200);
+  --ui-border-muted: var(--ui-color-neutral-200);
+  --ui-border-accented: var(--ui-color-neutral-300);
+
+  --ui-text-dimmed: var(--ui-color-neutral-400);
+  --ui-text-muted: var(--ui-color-neutral-500);
+  --ui-text-toned: var(--ui-color-neutral-600);
+  --ui-text: var(--ui-color-neutral-700);
+  --ui-text-highlighted: var(--ui-color-neutral-900);
 }
 
 .font-body-normal {

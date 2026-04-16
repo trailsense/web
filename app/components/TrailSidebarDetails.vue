@@ -13,19 +13,19 @@
       <h2 class="text-lg font-semibold">
         {{ trail.name }}
       </h2>
-      <p class="text-sm text-gray-500">
+      <p class="text-sm text-muted">
         Source: {{ trail.source }}
       </p>
 
       <p
         v-if="trail.source_id"
-        class="text-xs text-gray-400"
+        class="text-xs text-dimmed"
       >
         Source ID: {{ trail.source_id }}
       </p>
     </div>
 
-    <div class="text-xs text-gray-400">
+    <div class="text-xs text-dimmed">
       ID: {{ trail.id }}
     </div>
   </div>

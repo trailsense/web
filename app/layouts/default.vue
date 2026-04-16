@@ -1,12 +1,15 @@
 <template>
-  <div class="relative h-screen w-full overflow-hidden [--layout-gap:1rem] [--sidebar-width:min(22rem,calc(100%-1.5rem))]">
+  <div
+    class="relative h-screen w-full overflow-hidden [--layout-gap:1rem] [--sidebar-width:min(22rem,calc(100%-1.5rem))]"
+  >
     <div class="h-full w-full">
       <slot :view-mode="viewMode" />
     </div>
 
     <aside
-      class="absolute left-4 top-4 z-40 flex overflow-hidden rounded-3xl border border-default bg-(--sidebar-bg) shadow-sm backdrop-blur transition-all duration-300 ease-in-out"
-      :class="isSidebarCollapsed ? 'w-(--sidebar-width) flex-col' : 'bottom-4 h-auto w-(--sidebar-width) flex-col'"
+      :class="isSidebarCollapsed ? 'w-[var(--sidebar-width)] flex-col' : 'bottom-4 h-auto w-[var(--sidebar-width)] flex-col'"
+      class="absolute left-4 top-4 z-40 flex overflow-hidden rounded-3xl border border-default bg-default shadow-sm backdrop-blur transition-all duration-300 ease-in-out"
+      data-map-overlay="sidebar"
     >
       <div class="flex w-full items-center justify-between gap-2 px-4 py-4">
         <AppLogo
@@ -14,12 +17,12 @@
           class="h-8 w-auto shrink-0"
         />
         <UButton
-          color="neutral"
-          icon="i-lucide-panel-right-open"
           :class="[
-            'text-(--color-muted) transition-transform duration-200 hover:text-(--color-dark)',
+            'text-muted transition-transform duration-200 hover:text-highlighted',
             isSidebarCollapsed ? '-rotate-90' : 'rotate-90'
           ]"
+          color="neutral"
+          icon="i-lucide-panel-right-open"
           variant="ghost"
           @click="isSidebarCollapsed = !isSidebarCollapsed"
         />
@@ -35,20 +38,20 @@
             :content="false"
             :items="viewItems"
             :ui="{
-              list: 'bg-[var(--color-lightgrey)]',
-              indicator: 'bg-[var(--color-white)] shadow-sm',
-              trigger: 'font-body-normal data-[state=active]:text-default'
+              list: 'bg-muted',
+              indicator: 'bg-elevated shadow-sm',
+              trigger: 'font-body-normal text-muted data-[state=active]:text-highlighted'
             }"
+            color="primary"
             size="xs"
             variant="pill"
-            color="primary"
           />
         </div>
 
         <div class="min-h-0 flex-1 overflow-y-auto py-2">
           <slot
-            name="sidebar"
             :view-mode="viewMode"
+            name="sidebar"
           />
         </div>
 
@@ -70,14 +73,14 @@
 
     <FloatingBottomCard :sidebar-collapsed="isSidebarCollapsed">
       <slot
-        name="bottom-card"
         :view-mode="viewMode"
+        name="bottom-card"
       >
         <div class="w-full">
-          <p class="font-h3 text-(--color-dark)">
+          <p class="font-h3 text-highlighted">
             Bottom Card
           </p>
-          <p class="mt-1 font-body-small text-(--color-muted)">
+          <p class="mt-1 font-body-small text-muted">
             This floating card is ready. Provide the bottom-card slot to customize its content.
           </p>
         </div>
@@ -86,7 +89,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 const isSidebarCollapsed = ref(false)
 
 const viewMode = useState<'nodes' | 'trails'>('dashboard:viewMode', () => 'nodes')

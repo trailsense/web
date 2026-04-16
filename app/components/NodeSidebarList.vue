@@ -13,7 +13,7 @@
 
     <p
       v-else-if="errorText"
-      class="px-4 py-2 text-sm text-red-600"
+      class="px-4 py-2 text-sm text-error"
     >
       {{ errorText }}
     </p>

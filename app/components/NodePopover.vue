@@ -17,7 +17,7 @@
           />
         </div>
 
-        <p class="text-xs text-gray-500">
+        <p class="text-xs text-muted">
           Node ID: {{ node.id }}
         </p>
 

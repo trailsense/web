@@ -44,18 +44,18 @@
             "kind"
           ],
           "grassland",
-          "rgba(210, 239, 207, 1)",
+          "rgba(193, 232, 214, 1)",
           "barren",
           "rgba(255, 243, 215, 1)",
           "urban_area",
           "rgba(230, 230, 230, 1)",
           "farmland",
-          "rgba(216, 239, 210, 1)",
+          "rgba(199, 233, 216, 1)",
           "glacier",
           "rgba(255, 255, 255, 1)",
           "scrub",
-          "rgba(234, 239, 210, 1)",
-          "rgba(196, 231, 210, 1)"
+          "rgba(220, 233, 214, 1)",
+          "rgba(179, 221, 203, 1)"
         ],
         "fill-opacity": [
           "interpolate",
@@ -132,7 +132,7 @@
               ]
             ]
           ],
-          "#9cd3b4",
+          "#80d7b7",
           [
             "in",
             [
@@ -148,7 +148,7 @@
               ]
             ]
           ],
-          "#a0d9a0",
+          "#8edbb2",
           [
             "in",
             [
@@ -164,7 +164,7 @@
               ]
             ]
           ],
-          "#99d2bb",
+          "#7fcfb2",
           [
             "in",
             [
@@ -226,7 +226,7 @@
         "playground"
       ],
       "paint": {
-        "fill-color": "#9cd3b4",
+        "fill-color": "#80d7b7",
         "fill-opacity": 0.7
       }
     },
@@ -3127,7 +3127,7 @@
         "text-letter-spacing": 0.2
       },
       "paint": {
-        "text-color": "#728dd4",
+        "text-color": "#8c7fc6",
         "text-halo-color": "#80deea",
         "text-halo-width": 1
       }
@@ -4938,7 +4938,7 @@
         "text-transform": "uppercase"
       },
       "paint": {
-        "text-color": "#728dd4",
+        "text-color": "#8c7fc6",
         "text-halo-width": 1,
         "text-halo-color": "#80deea"
       }
@@ -5847,7 +5847,7 @@
         "text-max-width": 9
       },
       "paint": {
-        "text-color": "#728dd4",
+        "text-color": "#8c7fc6",
         "text-halo-color": "#80deea",
         "text-halo-width": 1
       }
@@ -7738,7 +7738,7 @@
               ]
             ]
           ],
-          "#20834D",
+          "#338a6b",
           [
             "in",
             [
@@ -7755,7 +7755,7 @@
               ]
             ]
           ],
-          "#315BCF",
+          "#7e6ac4",
           [
             "in",
             [
@@ -7775,7 +7775,7 @@
               ]
             ]
           ],
-          "#6A5B8F",
+          "#8a72b3",
           "#e2dfda"
         ],
         "text-halo-color": "#e2dfda",
