@@ -233,3 +233,33 @@ export const TrailListItemDtoSchema = {
         }
     }
 } as const;
+
+export const TrailTimeseriesQueryDtoSchema = {
+    type: 'object',
+    required: [
+        'bucket',
+        'from',
+        'to'
+    ],
+    properties: {
+        bucket: {
+            $ref: '#/components/schemas/TimeseriesBucket',
+            description: 'Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.'
+        },
+        from: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range start (inclusive), must be earlier than `to`.'
+        },
+        to: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).'
+        },
+        tolerance_m: {
+            type: 'number',
+            format: 'double',
+            description: 'Distance threshold in meters from trail geometry. Defaults to 25m.'
+        }
+    }
+} as const;

@@ -4,8 +4,8 @@ import { type _JSONValue, defineQueryOptions, type UseMutationOptions } from '@p
 
 import { serializeQueryKeyValue } from '../client';
 import { client } from '../client.gen';
-import { addMeasurement, getNodeTrails, getTrail, getTrailNodes, listNodes, listTrails, measurementTimeseries, type Options } from '../sdk.gen';
-import type { AddMeasurementData, AddMeasurementResponse, GetNodeTrailsData, GetTrailData, GetTrailNodesData, ListNodesData, ListTrailsData, MeasurementTimeseriesData } from '../types.gen';
+import { addMeasurement, getNodeTrails, getTrail, getTrailNodes, listNodes, listTrails, measurementTimeseries, type Options, trailMeasurementTimeseries } from '../sdk.gen';
+import type { AddMeasurementData, AddMeasurementResponse, GetNodeTrailsData, GetTrailData, GetTrailNodesData, ListNodesData, ListTrailsData, MeasurementTimeseriesData, TrailMeasurementTimeseriesData } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'path'> & {
@@ -101,6 +101,20 @@ export const measurementTimeseriesQuery = defineQueryOptions((options: Options<M
     key: measurementTimeseriesQueryKey(options),
     query: async (context) => {
         const { data } = await measurementTimeseries({
+            ...options,
+            ...context,
+            throwOnError: true
+        });
+        return data;
+    }
+}));
+
+export const trailMeasurementTimeseriesQueryKey = (options: Options<TrailMeasurementTimeseriesData>) => createQueryKey('trailMeasurementTimeseries', options);
+
+export const trailMeasurementTimeseriesQuery = defineQueryOptions((options: Options<TrailMeasurementTimeseriesData>) => ({
+    key: trailMeasurementTimeseriesQueryKey(options),
+    query: async (context) => {
+        const { data } = await trailMeasurementTimeseries({
             ...options,
             ...context,
             throwOnError: true

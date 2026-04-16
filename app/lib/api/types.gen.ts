@@ -70,6 +70,25 @@ export type TrailListItemDto = {
     source_id?: number | null;
 };
 
+export type TrailTimeseriesQueryDto = {
+    /**
+     * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+     */
+    bucket: TimeseriesBucket;
+    /**
+     * Range start (inclusive), must be earlier than `to`.
+     */
+    from: string;
+    /**
+     * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+     */
+    to: string;
+    /**
+     * Distance threshold in meters from trail geometry. Defaults to 25m.
+     */
+    tolerance_m?: number;
+};
+
 export type ListTrailsData = {
     body?: never;
     path?: never;
@@ -211,6 +230,44 @@ export type MeasurementTimeseriesResponses = {
 };
 
 export type MeasurementTimeseriesResponse = MeasurementTimeseriesResponses[keyof MeasurementTimeseriesResponses];
+
+export type TrailMeasurementTimeseriesData = {
+    body?: never;
+    path: {
+        /**
+         * Trail ID
+         */
+        trail_id: string;
+    };
+    query: {
+        /**
+         * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+         */
+        bucket: TimeseriesBucket;
+        /**
+         * Range start (inclusive), must be earlier than `to`.
+         */
+        from: string;
+        /**
+         * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+         */
+        to: string;
+        /**
+         * Distance threshold in meters from trail geometry. Defaults to 25m.
+         */
+        tolerance_m?: number;
+    };
+    url: '/measurements/trails/{trail_id}/timeseries';
+};
+
+export type TrailMeasurementTimeseriesResponses = {
+    /**
+     * Rounded average measurement timeseries across nodes along a trail
+     */
+    200: Array<TimeseriesPointDto>;
+};
+
+export type TrailMeasurementTimeseriesResponse = TrailMeasurementTimeseriesResponses[keyof TrailMeasurementTimeseriesResponses];
 
 export type ListNodesData = {
     body?: never;
