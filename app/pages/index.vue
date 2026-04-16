@@ -36,6 +36,10 @@
       </template>
     </template>
 
+    <template #bottom-card>
+      <BottomCardLineChart />
+    </template>
+
     <MapView
       :mode="viewMode"
       :nodes="nodes"

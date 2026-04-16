@@ -1,12 +1,12 @@
 <template>
-  <div class="relative h-screen w-full overflow-hidden">
+  <div class="relative h-screen w-full overflow-hidden [--layout-gap:1rem] [--sidebar-width:min(22rem,calc(100%-1.5rem))]">
     <div class="h-full w-full">
       <slot :view-mode="viewMode" />
     </div>
 
     <aside
       class="absolute left-4 top-4 z-40 flex overflow-hidden rounded-3xl border border-default bg-(--sidebar-bg) shadow-sm backdrop-blur transition-all duration-300 ease-in-out"
-      :class="isSidebarCollapsed ? 'w-[min(22rem,calc(100%-1.5rem))] flex-col' : 'bottom-4 h-auto w-[min(22rem,calc(100%-1.5rem))] flex-col'"
+      :class="isSidebarCollapsed ? 'w-(--sidebar-width) flex-col' : 'bottom-4 h-auto w-(--sidebar-width) flex-col'"
     >
       <div class="flex w-full items-center justify-between gap-2 px-4 py-4">
         <AppLogo
@@ -67,6 +67,22 @@
         </div>
       </div>
     </aside>
+
+    <FloatingBottomCard :sidebar-collapsed="isSidebarCollapsed">
+      <slot
+        name="bottom-card"
+        :view-mode="viewMode"
+      >
+        <div class="w-full">
+          <p class="font-h3 text-(--color-dark)">
+            Bottom Card
+          </p>
+          <p class="mt-1 font-body-small text-(--color-muted)">
+            This floating card is ready. Provide the bottom-card slot to customize its content.
+          </p>
+        </div>
+      </slot>
+    </FloatingBottomCard>
   </div>
 </template>
 
