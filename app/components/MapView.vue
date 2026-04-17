@@ -71,7 +71,7 @@ const mapRef = ref<{ map: MapLibreMap } | null>(null)
 const hoveredTrailId = ref<string | null>(null)
 
 const style = '/map/style.json'
-const center: [number, number] = [13.0867, 47.7239]
+const center: [number, number] = [11.393, 47.287]
 const zoom = 13
 const CAMERA_MARGIN = 24
 const EDGE_PROXIMITY = 28
@@ -114,7 +114,14 @@ const trailGeoJson = computed<GeoJSON.FeatureCollection<GeoJSON.MultiLineString,
   }
 })
 
-const effectiveHoveredTrailId = computed(() => props.hoveredTrailIdFromList ?? hoveredTrailId.value)
+const effectiveHoveredTrailId = computed(() => {
+  const hoveredTrailIdValue = props.hoveredTrailIdFromList ?? hoveredTrailId.value
+
+  if (!hoveredTrailIdValue) return null
+  if (props.selectedTrailId && hoveredTrailIdValue !== props.selectedTrailId) return null
+
+  return hoveredTrailIdValue
+})
 
 const trailPaint = computed<Record<string, unknown>>(() => ({
   'line-color': [
@@ -125,14 +132,22 @@ const trailPaint = computed<Record<string, unknown>>(() => ({
     '#15803d',
     '#16a34a'
   ],
+  'line-color-transition': {
+    duration: 180,
+    delay: 0
+  },
   'line-width': [
     'case',
     ['==', ['get', 'id'], props.selectedTrailId],
-    4,
+    4.5,
     ['==', ['get', 'id'], effectiveHoveredTrailId.value],
-    4,
+    4.5,
     2
-  ]
+  ],
+  'line-width-transition': {
+    duration: 240,
+    delay: 0
+  }
 }))
 
 function getMap() {
@@ -202,6 +217,47 @@ function getCameraPadding(): CameraPadding {
   })
 
   return padding
+}
+
+function getFitBoundsPadding(): CameraPadding {
+  const map = getMap()
+  const mapRect = map?.getContainer().getBoundingClientRect()
+
+  if (!map || !mapRect) {
+    return {
+      top: CAMERA_MARGIN,
+      right: CAMERA_MARGIN,
+      bottom: CAMERA_MARGIN,
+      left: CAMERA_MARGIN
+    }
+  }
+
+  // For trail fitting, use balanced padding to center content in the visible area
+  const overlays = Array.from(document.querySelectorAll<HTMLElement>('[data-map-overlay]'))
+  let maxLeftSpace = 0
+  let maxRightSpace = 0
+
+  overlays.forEach((overlay) => {
+    const style = window.getComputedStyle(overlay)
+    if (style.display === 'none' || style.visibility === 'hidden') return
+
+    const rect = overlay.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+
+    if (rect.right <= mapRect.left + mapRect.width / 2) {
+      maxLeftSpace = Math.max(maxLeftSpace, rect.right - mapRect.left)
+    } else {
+      maxRightSpace = Math.max(maxRightSpace, mapRect.right - rect.left)
+    }
+  })
+
+  // Use minimal padding to avoid excessive zoom-out while slightly offsetting for overlays
+  return {
+    top: CAMERA_MARGIN,
+    right: Math.max(CAMERA_MARGIN, maxRightSpace * 0.15),
+    bottom: CAMERA_MARGIN,
+    left: Math.max(CAMERA_MARGIN, maxLeftSpace * 0.15)
+  }
 }
 
 function updateBbox() {
@@ -287,8 +343,9 @@ watch(
     })
 
     map.fitBounds(bounds, {
-      padding: getCameraPadding(),
-      duration: 600
+      padding: getFitBoundsPadding(),
+      duration: 1200,
+      easing: t => 1 - Math.pow(1 - t, 3)
     })
   }
 )
