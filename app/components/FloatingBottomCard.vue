@@ -1,10 +1,9 @@
 <template>
   <section
     data-map-overlay="bottom-card"
-    class="absolute bottom-[var(--layout-gap)] left-[var(--layout-gap)] right-[var(--layout-gap)] z-45 min-h-32 overflow-hidden rounded-3xl border border-default bg-default shadow-sm backdrop-blur"
-    :class="!sidebarCollapsed ? 'lg:left-[calc(var(--layout-gap)+var(--sidebar-width)+var(--layout-gap))]' : ''"
+    class="w-full min-h-20 overflow-hidden rounded-3xl border border-default bg-default shadow-sm backdrop-blur"
   >
-    <div class="flex min-h-32 items-stretch px-4 py-3">
+    <div class="flex min-h-20 items-stretch px-3 py-2">
       <slot />
     </div>
   </section>

@@ -5,7 +5,7 @@
         ref="chartEl"
         :class="hasSelection && !isTimelineLoading && !timelineErrorText && sortedPoints.length > 0 ? 'block' : 'hidden'"
         aria-label="Bottom card timeline"
-        class="h-[88px] w-full"
+        class="h-22 w-full"
       />
     </div>
   </ClientOnly>
