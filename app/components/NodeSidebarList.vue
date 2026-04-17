@@ -33,7 +33,7 @@
         v-for="node in nodes"
         :id="node.id"
         :key="node.id"
-        :subtitle="`Every ${node.send_frequency_seconds}s`"
+        :subtitle="`Status: ${getNodeStatusLabel(node.status)}`"
         :title="node.name"
         @select="$emit('select', node.id)"
         @hover="$emit('hover', node.id)"
@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import type { NodeDto } from '~/lib/api/types.gen'
+import { getNodeStatusLabel } from '~/utils/node-status'
 
 withDefaults(defineProps<{
   nodes: NodeDto[]

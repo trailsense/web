@@ -109,6 +109,19 @@ const getSeries = (): LineSeriesOption => ({
   type: 'line',
   smooth: false,
   data: valueList.value,
+  areaStyle: {
+    color: {
+      type: 'linear',
+      x: 0,
+      y: 0,
+      x2: 0,
+      y2: 1,
+      colorStops: [
+        { offset: 0, color: 'rgba(106, 112, 76, 0.42)' },
+        { offset: 1, color: 'rgba(106, 112, 76, 0)' }
+      ]
+    }
+  },
   showSymbol: true,
   symbol: 'circle',
   symbolSize: 3,

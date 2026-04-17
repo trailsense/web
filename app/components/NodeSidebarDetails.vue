@@ -13,9 +13,6 @@
       <h2 class="text-lg font-semibold">
         {{ node.name }}
       </h2>
-      <p class="text-sm text-muted">
-        Node ID: {{ node.id }}
-      </p>
     </div>
 
     <div class="flex items-center gap-2 text-sm">
@@ -29,6 +26,7 @@
     </div>
 
     <div class="space-y-1 text-xs text-muted">
+      <p><strong>Node ID:</strong> {{ node.id }}</p>
       <p><strong>Coordinates:</strong> {{ node.longitude }}, {{ node.latitude }}</p>
       <p><strong>Send frequency:</strong> Every {{ node.send_frequency_seconds }}s</p>
       <p><strong>Created:</strong> {{ formatDate(node.created_at) }}</p>

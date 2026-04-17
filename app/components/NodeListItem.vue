@@ -8,7 +8,7 @@
         {{ node.name }}
       </p>
       <p class="font-body-small truncate text-muted">
-        Every {{ node.send_frequency_seconds }}s
+        {{ getNodeStatusLabel(node.status) }}
       </p>
     </div>
   </div>
@@ -16,6 +16,7 @@
 
 <script setup lang="ts">
 import type { NodeDto } from '~/lib/api/types.gen'
+import { getNodeStatusLabel } from '~/utils/node-status'
 
 defineEmits<{
   (e: 'select', nodeId: string): void
