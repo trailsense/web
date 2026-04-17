@@ -155,6 +155,46 @@ export type TrailsQueryDto = {
     lon?: number | null;
 };
 
+export type ViewportTrailTimeseriesQueryDto = {
+    /**
+     * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+     */
+    bucket: TimeseriesBucket;
+    /**
+     * Range start (inclusive), must be earlier than `to`.
+     */
+    from: string;
+    /**
+     * Include trail geometry/path in the returned trail list.
+     */
+    include_geo?: boolean;
+    /**
+     * Optional map center latitude (WGS84 / EPSG:4326). Must be provided together with `lon`.
+     */
+    lat?: number | null;
+    /**
+     * Hard cap for number of selected trails. Defaults to 20.
+     */
+    limit?: number;
+    /**
+     * Optional map center longitude (WGS84 / EPSG:4326). Must be provided together with `lat`.
+     */
+    lon?: number | null;
+    /**
+     * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+     */
+    to: string;
+    /**
+     * Distance threshold in meters from trail geometry for per-trail averaging. Defaults to 25m.
+     */
+    tolerance_m?: number;
+};
+
+export type ViewportTrailTimeseriesResponseDto = {
+    timeseries: Array<TimeseriesPointDto>;
+    trails: Array<TrailListItemDto>;
+};
+
 export type ListTrailsData = {
     body?: never;
     path?: never;
@@ -301,6 +341,55 @@ export type MeasurementTimeseriesResponses = {
 };
 
 export type MeasurementTimeseriesResponse = MeasurementTimeseriesResponses[keyof MeasurementTimeseriesResponses];
+
+export type ViewportTrailMeasurementTimeseriesData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+         */
+        bucket: TimeseriesBucket;
+        /**
+         * Range start (inclusive), must be earlier than `to`.
+         */
+        from: string;
+        /**
+         * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+         */
+        to: string;
+        /**
+         * Optional map center latitude (WGS84 / EPSG:4326). Must be provided together with `lon`.
+         */
+        lat?: number;
+        /**
+         * Optional map center longitude (WGS84 / EPSG:4326). Must be provided together with `lat`.
+         */
+        lon?: number;
+        /**
+         * Include trail geometry/path in the returned trail list.
+         */
+        include_geo?: boolean;
+        /**
+         * Hard cap for number of selected trails. Defaults to 20.
+         */
+        limit?: number;
+        /**
+         * Distance threshold in meters from trail geometry for per-trail averaging. Defaults to 25m.
+         */
+        tolerance_m?: number;
+    };
+    url: '/measurements/trails/viewport/timeseries';
+};
+
+export type ViewportTrailMeasurementTimeseriesResponses = {
+    /**
+     * Center-based nearby trail list and aggregate measurement timeseries across returned trails
+     */
+    200: ViewportTrailTimeseriesResponseDto;
+};
+
+export type ViewportTrailMeasurementTimeseriesResponse = ViewportTrailMeasurementTimeseriesResponses[keyof ViewportTrailMeasurementTimeseriesResponses];
 
 export type TrailMeasurementTimeseriesData = {
     body?: never;

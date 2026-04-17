@@ -5,10 +5,21 @@ import {
   measurementTimeseriesQuery,
   trailMeasurementTimeseriesQuery
 } from '~/lib/api/@pinia/colada.gen'
-import type { NodeDto, TimeseriesBucket, TimeseriesPointDto, TrailListItemDto } from '~/lib/api/types.gen'
+import { viewportTrailMeasurementTimeseries } from '~/lib/api'
+import type {
+  NodeDto,
+  TimeseriesBucket,
+  TimeseriesPointDto,
+  TrailListItemDto,
+  ViewportTrailTimeseriesResponseDto
+} from '~/lib/api/types.gen'
 
 type ApiArrayEnvelope<T> = {
   data?: T[]
+}
+
+type ApiObjectEnvelope<T> = {
+  data?: T
 }
 
 const DEFAULT_LIST_LIMIT = 50
@@ -35,28 +46,17 @@ const toApiDate = (input: string | null): string | undefined => {
   return parsed.toISOString().slice(0, 10)
 }
 
-const addDaysUtc = (date: Date, days: number) => {
-  const next = new Date(date)
-  next.setUTCDate(next.getUTCDate() + days)
-  return next
-}
+const unwrapViewportTimeseries = (payload: unknown): TimeseriesPointDto[] => {
+  if (!payload || typeof payload !== 'object') return []
+  const typed = payload as Partial<ViewportTrailTimeseriesResponseDto>
+  if (Array.isArray(typed.timeseries)) return typed.timeseries
 
-const buildBucketStartIso = (fromIso: string, toIso: string, bucket: TimeseriesBucket): string[] => {
-  const from = new Date(fromIso)
-  const to = new Date(toIso)
-
-  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from >= to) {
-    return []
+  const wrapped = (payload as ApiObjectEnvelope<ViewportTrailTimeseriesResponseDto>).data
+  if (wrapped && Array.isArray(wrapped.timeseries)) {
+    return wrapped.timeseries
   }
 
-  const stepDays = bucket === 'week' ? 7 : 1
-  const result: string[] = []
-
-  for (let cursor = new Date(from); cursor < to; cursor = addDaysUtc(cursor, stepDays)) {
-    result.push(new Date(cursor).toISOString())
-  }
-
-  return result
+  return []
 }
 
 function toTrailFeature(trail: TrailListItemDto): GeoJSON.Feature | null {
@@ -94,18 +94,9 @@ export function useTrailDashboardQueries(params: {
   }>
   viewMode: Ref<'nodes' | 'trails'>
 }) {
-  const unselectedTimelineTotals = useState<Record<string, number>>('dashboard:timeline:unselectedTotals', () => ({}))
-
   const selectedMarkerDate = computed(() => toApiDate(params.activeMarkerId.value))
   const statsDate = computed(() => selectedMarkerDate.value ?? toApiDate(params.timelineRangeTo.value))
   const hasEntitySelection = computed(() => Boolean(params.selectedNodeId.value || params.selectedTrailId.value))
-  const bucketStartIso = computed(() =>
-    buildBucketStartIso(
-      params.timelineRangeFrom.value,
-      params.timelineRangeTo.value,
-      params.timelineBucket.value
-    )
-  )
 
   const nodesEnabled = computed(() => true)
   const trailsEnabled = computed(() => true)
@@ -148,6 +139,7 @@ export function useTrailDashboardQueries(params: {
       }
     }),
     enabled: nodesEnabled.value && !hasEntitySelection.value && Boolean(statsDate.value),
+    placeholderData: previousData => previousData,
     staleTime: 60_000
   }))
 
@@ -163,6 +155,7 @@ export function useTrailDashboardQueries(params: {
       }
     }),
     enabled: trailsEnabled.value && !hasEntitySelection.value && Boolean(statsDate.value),
+    placeholderData: previousData => previousData,
     staleTime: 60_000
   }))
 
@@ -180,24 +173,6 @@ export function useTrailDashboardQueries(params: {
       map[trail.id] = trail.activation_count ?? null
     }
     return map
-  })
-
-  const currentUnselectedTotal = computed(() => {
-    if (params.viewMode.value === 'nodes') {
-      const statsList = unwrapArray<NodeDto>(nodesStatsQuery.data.value)
-      if (statsList.length > 0) {
-        return statsList.reduce((sum, node) => sum + (node.activation_count ?? 0), 0)
-      }
-
-      return nodes.value.reduce((sum, node) => sum + (node.activation_count ?? 0), 0)
-    }
-
-    const statsList = unwrapArray<TrailListItemDto>(trailsStatsQuery.data.value)
-    if (statsList.length > 0) {
-      return statsList.reduce((sum, trail) => sum + (trail.activation_count ?? 0), 0)
-    }
-
-    return trails.value.reduce((sum, trail) => sum + (trail.activation_count ?? 0), 0)
   })
 
   const nodes = computed<NodeDto[]>(() =>
@@ -245,36 +220,43 @@ export function useTrailDashboardQueries(params: {
     }
 
     return {
-      ...measurementTimeseriesQuery({
-        path: {
-          node_id: '__disabled__'
-        },
-        query: {
-          bucket: params.timelineBucket.value,
-          from: params.timelineRangeFrom.value,
-          to: params.timelineRangeTo.value
-        }
-      }),
-      enabled: false
+      key: [
+        'viewport-trail-timeseries-unselected',
+        params.timelineBucket.value,
+        params.timelineRangeFrom.value,
+        params.timelineRangeTo.value,
+        params.mapCenter.value.lat,
+        params.mapCenter.value.lon
+      ],
+      query: async (context) => {
+        const { data } = await viewportTrailMeasurementTimeseries({
+          query: {
+            bucket: params.timelineBucket.value,
+            from: params.timelineRangeFrom.value,
+            to: params.timelineRangeTo.value,
+            lat: params.mapCenter.value.lat,
+            lon: params.mapCenter.value.lon,
+            include_geo: false,
+            limit: DEFAULT_LIST_LIMIT
+          },
+          ...context,
+          throwOnError: true
+        })
+
+        return unwrapViewportTimeseries(data)
+      },
+      enabled: true,
+      placeholderData: previousData => previousData,
+      staleTime: 60_000
     }
   })
 
-  const timelinePoints = computed(() => {
-    if (hasEntitySelection.value) {
-      return unwrapArray<TimeseriesPointDto>(timelineQuery.data.value).map(point => ({
-        timestamp: point.bucket_start,
-        value: point.total_count
-      }))
-    }
-
-    return bucketStartIso.value.map((timestamp) => {
-      const key = toApiDate(timestamp) ?? timestamp
-      return {
-        timestamp,
-        value: unselectedTimelineTotals.value[key] ?? currentUnselectedTotal.value
-      }
-    })
-  })
+  const timelinePoints = computed(() =>
+    unwrapArray<TimeseriesPointDto>(timelineQuery.data.value).map(point => ({
+      timestamp: point.bucket_start,
+      value: point.total_count
+    }))
+  )
 
   const activityQuery = useQuery(() => {
     if (!params.selectedBucketRangeFrom.value || !params.selectedBucketRangeTo.value) {
@@ -364,57 +346,6 @@ export function useTrailDashboardQueries(params: {
       features: features as GeoJSON.Feature<GeoJSON.LineString | GeoJSON.MultiLineString>[]
     }
   })
-
-  watch(
-    () => [
-      params.viewMode.value,
-      params.timelineBucket.value,
-      params.timelineRangeFrom.value,
-      params.timelineRangeTo.value,
-      params.mapCenter.value.lat,
-      params.mapCenter.value.lon
-    ],
-    () => {
-      unselectedTimelineTotals.value = {}
-    },
-    { immediate: true }
-  )
-
-  watch(
-    () => [
-      params.viewMode.value,
-      hasEntitySelection.value,
-      selectedMarkerDate.value,
-      statsDate.value,
-      nodesStatsQuery.isPending.value,
-      trailsStatsQuery.isPending.value,
-      nodesStatsQuery.data.value,
-      trailsStatsQuery.data.value
-    ],
-    () => {
-      if (hasEntitySelection.value) return
-      const markerDate = selectedMarkerDate.value ?? statsDate.value
-      if (!markerDate) return
-
-      if (params.viewMode.value === 'nodes') {
-        if (nodesStatsQuery.isPending.value) return
-        const total = unwrapArray<NodeDto>(nodesStatsQuery.data.value).reduce((sum, node) => sum + (node.activation_count ?? 0), 0)
-        unselectedTimelineTotals.value = {
-          ...unselectedTimelineTotals.value,
-          [markerDate]: total
-        }
-        return
-      }
-
-      if (trailsStatsQuery.isPending.value) return
-      const total = unwrapArray<TrailListItemDto>(trailsStatsQuery.data.value).reduce((sum, trail) => sum + (trail.activation_count ?? 0), 0)
-      unselectedTimelineTotals.value = {
-        ...unselectedTimelineTotals.value,
-        [markerDate]: total
-      }
-    },
-    { immediate: true }
-  )
 
   return {
     activityPoints,

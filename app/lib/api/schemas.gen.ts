@@ -375,3 +375,80 @@ export const TrailsQueryDtoSchema = {
         }
     }
 } as const;
+
+export const ViewportTrailTimeseriesQueryDtoSchema = {
+    type: 'object',
+    required: [
+        'bucket',
+        'from',
+        'to'
+    ],
+    properties: {
+        bucket: {
+            $ref: '#/components/schemas/TimeseriesBucket',
+            description: 'Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.'
+        },
+        from: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range start (inclusive), must be earlier than `to`.'
+        },
+        include_geo: {
+            type: 'boolean',
+            description: 'Include trail geometry/path in the returned trail list.'
+        },
+        lat: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center latitude (WGS84 / EPSG:4326). Must be provided together with `lon`.'
+        },
+        limit: {
+            type: 'integer',
+            format: 'int64',
+            description: 'Hard cap for number of selected trails. Defaults to 20.'
+        },
+        lon: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center longitude (WGS84 / EPSG:4326). Must be provided together with `lat`.'
+        },
+        to: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).'
+        },
+        tolerance_m: {
+            type: 'number',
+            format: 'double',
+            description: 'Distance threshold in meters from trail geometry for per-trail averaging. Defaults to 25m.'
+        }
+    }
+} as const;
+
+export const ViewportTrailTimeseriesResponseDtoSchema = {
+    type: 'object',
+    required: [
+        'timeseries',
+        'trails'
+    ],
+    properties: {
+        timeseries: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/TimeseriesPointDto'
+            }
+        },
+        trails: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/TrailListItemDto'
+            }
+        }
+    }
+} as const;

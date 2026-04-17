@@ -42,6 +42,30 @@ const parseDate = (input: string): Date | null => {
   return parsed
 }
 
+const pickClosestMarkerId = (targetMarkerId: string | null, markerIds: string[]) => {
+  if (markerIds.length === 0) return null
+  if (!targetMarkerId) return null
+
+  const targetDate = parseDate(targetMarkerId)
+  if (!targetDate) return null
+
+  let closestId: string | null = null
+  let smallestDiff = Number.POSITIVE_INFINITY
+
+  markerIds.forEach((id) => {
+    const markerDate = parseDate(id)
+    if (!markerDate) return
+
+    const diff = Math.abs(markerDate.getTime() - targetDate.getTime())
+    if (diff < smallestDiff) {
+      smallestDiff = diff
+      closestId = id
+    }
+  })
+
+  return closestId
+}
+
 const granularityLabel = (bucketStart: string, granularity: DashboardGranularity) => {
   const parsed = parseDate(bucketStart)
   if (!parsed) return ''
@@ -117,6 +141,7 @@ export function useTrailDashboardTimelineState() {
   }
 
   const setTimelineBuckets = (bucketStarts: string[]) => {
+    const previousActiveMarkerId = activeMarkerId.value
     const nextMarkers = Array.from(new Set(bucketStarts))
       .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
       .map(bucketStart => ({
@@ -124,14 +149,20 @@ export function useTrailDashboardTimelineState() {
         bucketStart
       }))
 
-    markers.value = nextMarkers
-
     if (nextMarkers.length === 0) {
-      activeMarkerId.value = null
+      // Keep previous marker selection while queries transition.
       return
     }
 
-    if (activeMarkerId.value && nextMarkers.some(marker => marker.id === activeMarkerId.value)) {
+    markers.value = nextMarkers
+
+    if (previousActiveMarkerId && nextMarkers.some(marker => marker.id === previousActiveMarkerId)) {
+      return
+    }
+
+    const closestMarkerId = pickClosestMarkerId(previousActiveMarkerId, nextMarkers.map(marker => marker.id))
+    if (closestMarkerId) {
+      activeMarkerId.value = closestMarkerId
       return
     }
 

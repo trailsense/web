@@ -126,7 +126,7 @@ const getSeries = (): LineSeriesOption => ({
   },
   showSymbol: true,
   symbol: 'circle',
-  symbolSize: 3,
+  symbolSize: 3.5,
   lineStyle: {
     width: 2,
     color: '#6a704c'

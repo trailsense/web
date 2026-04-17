@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddMeasurementData, AddMeasurementResponses, GetNodeTrailsData, GetNodeTrailsResponses, GetTrailData, GetTrailNodesData, GetTrailNodesResponses, GetTrailResponses, ListNodesData, ListNodesResponses, ListTrailsData, ListTrailsResponses, MeasurementTimeseriesData, MeasurementTimeseriesResponses, TrailMeasurementTimeseriesData, TrailMeasurementTimeseriesResponses } from './types.gen';
+import type { AddMeasurementData, AddMeasurementResponses, GetNodeTrailsData, GetNodeTrailsResponses, GetTrailData, GetTrailNodesData, GetTrailNodesResponses, GetTrailResponses, ListNodesData, ListNodesResponses, ListTrailsData, ListTrailsResponses, MeasurementTimeseriesData, MeasurementTimeseriesResponses, TrailMeasurementTimeseriesData, TrailMeasurementTimeseriesResponses, ViewportTrailMeasurementTimeseriesData, ViewportTrailMeasurementTimeseriesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -48,6 +48,12 @@ export const addMeasurement = <ThrowOnError extends boolean = false>(options: Op
 export const measurementTimeseries = <ThrowOnError extends boolean = false>(options: Options<MeasurementTimeseriesData, ThrowOnError>) => (options.client ?? client).get<MeasurementTimeseriesResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/measurements/nodes/{node_id}/timeseries',
+    ...options
+});
+
+export const viewportTrailMeasurementTimeseries = <ThrowOnError extends boolean = false>(options: Options<ViewportTrailMeasurementTimeseriesData, ThrowOnError>) => (options.client ?? client).get<ViewportTrailMeasurementTimeseriesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/measurements/trails/viewport/timeseries',
     ...options
 });
 

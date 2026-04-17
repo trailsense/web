@@ -3,6 +3,9 @@
     <USelect
       v-model="selectedGranularity"
       :items="granularityItems"
+      :ui="{
+        base: 'focus:ring-1 focus:ring-inset focus:ring-default'
+      }"
       class="w-28"
       color="neutral"
       size="xs"
