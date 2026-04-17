@@ -22,6 +22,8 @@
       <template v-else>
         <TrailSidebarList
           v-if="!selectedTrail"
+          :error-text="trailsErrorText"
+          :is-loading="isTrailsLoading"
           :trails="trails"
           @select="selectTrailHandler"
           @hover="hoveredTrailId = $event"
@@ -79,11 +81,22 @@ const {
   selectedTrailId,
   selectNode,
   selectTrail,
-  trails
+  trails,
+  trailsQuery
 } = dashboard
 
-const isNodesLoading = computed(() => nodesQuery.isLoading.value || nodesQuery.isPending.value)
-const nodesErrorText = computed(() => (nodesQuery.error.value ? 'Failed to load nodes.' : ''))
+const isNodesLoading = computed(() =>
+  nodes.value.length === 0 && (nodesQuery.isLoading.value || nodesQuery.isPending.value)
+)
+const nodesErrorText = computed(() =>
+  nodes.value.length === 0 && nodesQuery.error.value ? 'Failed to load nodes.' : ''
+)
+const isTrailsLoading = computed(() =>
+  trails.value.length === 0 && (trailsQuery.isLoading.value || trailsQuery.isPending.value)
+)
+const trailsErrorText = computed(() =>
+  trails.value.length === 0 && trailsQuery.error.value ? 'Failed to load trails.' : ''
+)
 
 const hoveredNodeId = ref<string | null>(null)
 

@@ -4,26 +4,42 @@
       Available Nodes
     </p>
 
-    <p
+    <div
       v-if="isLoading"
-      class="px-4 py-2 text-sm text-muted"
+      class="px-4 py-2"
     >
-      Loading nodes...
-    </p>
+      <div class="flex items-center gap-2 text-sm text-muted">
+        <UIcon
+          name="i-lucide-loader-2"
+          class="size-4 animate-spin"
+        />
+        <span>Loading nodes...</span>
+      </div>
+    </div>
 
-    <p
+    <div
       v-else-if="errorText"
-      class="px-4 py-2 text-sm text-error"
+      class="px-4 py-2"
     >
-      {{ errorText }}
-    </p>
+      <UAlert
+        color="error"
+        variant="soft"
+        title="Failed to load nodes"
+        :description="errorText"
+      />
+    </div>
 
-    <p
+    <div
       v-else-if="nodes.length === 0"
-      class="px-4 py-2 text-sm text-muted"
+      class="px-4 py-2"
     >
-      No nodes available.
-    </p>
+      <UEmpty
+        icon="i-lucide-radio"
+        variant="naked"
+        title="No nodes"
+        description="No nodes available in this area."
+      />
+    </div>
 
     <div
       v-else

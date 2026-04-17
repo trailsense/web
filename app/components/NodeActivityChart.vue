@@ -50,6 +50,10 @@ const props = withDefaults(
 const chartEl = ref<HTMLDivElement | null>(null)
 let chart: EChartsType | null = null
 let resizeObserver: ResizeObserver | null = null
+let renderFrameId: number | null = null
+
+const MIN_CHART_DIMENSION_PX = 40
+const MAX_RENDER_ATTEMPTS = 10
 
 const chartData = computed<ChartDatum[]>(() =>
   props.points.map((point) => {
@@ -87,10 +91,22 @@ const hasMeaningfulData = computed(() =>
   chartData.value.some(item => item.count > 0)
 )
 
-const shouldRenderChart = computed(() =>
+const showLoadingState = computed(() =>
+  props.isLoading && !hasMeaningfulData.value
+)
+
+const showErrorState = computed(() =>
+  Boolean(props.errorText) && !hasMeaningfulData.value
+)
+
+const showEmptyState = computed(() =>
   !props.isLoading
   && !props.errorText
-  && hasMeaningfulData.value
+  && !hasMeaningfulData.value
+)
+
+const shouldRenderChart = computed(() =>
+  hasMeaningfulData.value
 )
 
 const chartOption = computed<EChartsOption>(() => ({
@@ -169,61 +185,136 @@ const ensureChart = () => {
   }
 }
 
+const disposeChart = () => {
+  chart?.dispose()
+  chart = null
+}
+
+const disconnectResizeObserver = () => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+}
+
+const cancelRenderFrame = () => {
+  if (renderFrameId === null || typeof window === 'undefined') return
+  window.cancelAnimationFrame(renderFrameId)
+  renderFrameId = null
+}
+
+const hasUsableChartSize = (element: HTMLDivElement) => {
+  const { width, height } = element.getBoundingClientRect()
+  return width >= MIN_CHART_DIMENSION_PX && height >= MIN_CHART_DIMENSION_PX
+}
+
 const renderChart = () => {
-  if (!shouldRenderChart.value) return
+  if (!shouldRenderChart.value || !chartEl.value) return false
+  if (!hasUsableChartSize(chartEl.value)) return false
   ensureChart()
+  chart?.resize({ animation: { duration: 0 } })
   chart?.setOption(chartOption.value, true)
+  chart?.resize()
+  return true
+}
+
+const scheduleRenderChart = async () => {
+  if (!shouldRenderChart.value) return
+  await nextTick()
+
+  if (typeof window === 'undefined') {
+    renderChart()
+    return
+  }
+
+  cancelRenderFrame()
+
+  let attempts = 0
+  const tryRender = () => {
+    renderFrameId = null
+
+    if (renderChart()) {
+      return
+    }
+
+    if (attempts >= MAX_RENDER_ATTEMPTS) {
+      return
+    }
+
+    attempts += 1
+    renderFrameId = window.requestAnimationFrame(tryRender)
+  }
+
+  renderFrameId = window.requestAnimationFrame(tryRender)
 }
 
 watch(shouldRenderChart, async (next) => {
-  if (!next) return
-  await nextTick()
-  renderChart()
+  if (!next) {
+    cancelRenderFrame()
+    return
+  }
+  await scheduleRenderChart()
 }, { immediate: true })
 
 watch(chartOption, () => {
-  renderChart()
+  scheduleRenderChart()
 })
 
-onMounted(() => {
-  if (!chartEl.value) return
+watch(chartEl, (element) => {
+  cancelRenderFrame()
+  disconnectResizeObserver()
+
+  if (!element) {
+    disposeChart()
+    return
+  }
 
   resizeObserver = new ResizeObserver(() => {
-    chart?.resize()
+    if (shouldRenderChart.value) {
+      scheduleRenderChart()
+    }
   })
 
-  resizeObserver.observe(chartEl.value)
-  renderChart()
-})
+  resizeObserver.observe(element)
+  scheduleRenderChart()
+}, { immediate: true })
 
 onBeforeUnmount(() => {
-  resizeObserver?.disconnect()
-  resizeObserver = null
-
-  chart?.dispose()
-  chart = null
+  cancelRenderFrame()
+  disconnectResizeObserver()
+  disposeChart()
 })
 </script>
 
 <template>
   <div class="space-y-2 rounded-lg border border-default p-3">
-    <div class="h-70 w-full">
+    <div class="h-[17.5rem] w-full">
       <p
-        v-if="isLoading"
-        class="flex h-full items-center justify-center text-sm text-muted"
+        v-if="showLoadingState"
+        class="flex h-full items-center justify-center"
       >
-        Loading measurements...
-      </p>
-
-      <p
-        v-else-if="errorText"
-        class="flex h-full items-center justify-center text-sm text-error"
-      >
-        {{ errorText }}
+        <span class="flex items-center gap-2 text-sm text-muted">
+          <UIcon
+            name="i-lucide-loader-2"
+            class="size-4 animate-spin"
+          />
+          <span>Loading measurements...</span>
+        </span>
       </p>
 
       <div
-        v-else-if="!hasMeaningfulData"
+        v-else-if="showErrorState"
+        class="flex h-full items-center justify-center"
+      >
+        <UAlert
+          color="error"
+          variant="soft"
+          title="Failed to load measurements"
+          :description="errorText"
+          class="max-w-md"
+        />
+      </div>
+
+      <div
+        v-else-if="showEmptyState"
         class="flex h-full items-center justify-center"
       >
         <UEmpty
@@ -236,7 +327,7 @@ onBeforeUnmount(() => {
 
       <ClientOnly>
         <div
-          v-show="shouldRenderChart"
+          v-if="shouldRenderChart"
           ref="chartEl"
           aria-label="Activity measurements chart"
           class="h-full w-full"

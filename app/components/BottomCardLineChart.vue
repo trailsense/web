@@ -2,6 +2,32 @@
   <ClientOnly>
     <div class="h-22 w-full">
       <div
+        v-if="showTimelineLoadingState"
+        class="flex h-22 w-full items-center justify-center"
+      >
+        <span class="flex items-center gap-2 text-sm text-muted">
+          <UIcon
+            name="i-lucide-loader-2"
+            class="size-4 animate-spin"
+          />
+          <span>Loading timeline...</span>
+        </span>
+      </div>
+
+      <div
+        v-else-if="showTimelineErrorState"
+        class="flex h-22 w-full items-center justify-center"
+      >
+        <UAlert
+          color="error"
+          variant="soft"
+          title="Failed to load timeline"
+          :description="timelineErrorText"
+          class="mx-2 w-full max-w-lg"
+        />
+      </div>
+
+      <div
         ref="chartEl"
         :class="shouldShowTimeline ? 'opacity-100' : 'pointer-events-none opacity-0'"
         aria-label="Bottom card timeline"
@@ -70,8 +96,14 @@ const isTimelineLoading = computed(() =>
 const timelineErrorText = computed(() =>
   timelineQuery.error.value ? 'Failed to load timeline.' : ''
 )
+const showTimelineLoadingState = computed(() =>
+  isTimelineLoading.value && sortedPoints.value.length === 0
+)
+const showTimelineErrorState = computed(() =>
+  Boolean(timelineErrorText.value) && sortedPoints.value.length === 0
+)
 const shouldShowTimeline = computed(() =>
-  !isTimelineLoading.value && !timelineErrorText.value && sortedPoints.value.length > 0
+  sortedPoints.value.length > 0
 )
 
 const sortedPoints = computed(() =>

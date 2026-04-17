@@ -246,7 +246,6 @@ export function useTrailDashboardQueries(params: {
         return unwrapViewportTimeseries(data)
       },
       enabled: true,
-      placeholderData: previousData => previousData,
       staleTime: 60_000
     }
   })

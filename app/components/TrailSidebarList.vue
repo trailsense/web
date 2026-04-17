@@ -5,10 +5,40 @@
     </p>
 
     <div
-      v-if="trails.length === 0"
-      class="px-4 py-2 text-sm text-muted"
+      v-if="isLoading"
+      class="px-4 py-2"
     >
-      No trails near the current map center.
+      <div class="flex items-center gap-2 text-sm text-muted">
+        <UIcon
+          name="i-lucide-loader-2"
+          class="size-4 animate-spin"
+        />
+        <span>Loading trails...</span>
+      </div>
+    </div>
+
+    <div
+      v-else-if="errorText"
+      class="px-4 py-2"
+    >
+      <UAlert
+        color="error"
+        variant="soft"
+        title="Failed to load trails"
+        :description="errorText"
+      />
+    </div>
+
+    <div
+      v-else-if="trails.length === 0"
+      class="px-4 py-2"
+    >
+      <UEmpty
+        icon="i-lucide-waypoints"
+        variant="naked"
+        title="No trails"
+        description="No trails near the current map center."
+      />
     </div>
 
     <div
@@ -35,6 +65,8 @@ import type { TrailListItemDto } from '~/lib/api/types.gen'
 
 defineProps<{
   trails: TrailListItemDto[]
+  isLoading?: boolean
+  errorText?: string
 }>()
 
 defineEmits<{
