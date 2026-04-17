@@ -83,10 +83,14 @@ const chartData = computed<ChartDatum[]>(() =>
   })
 )
 
+const hasMeaningfulData = computed(() =>
+  chartData.value.some(item => item.count > 0)
+)
+
 const shouldRenderChart = computed(() =>
   !props.isLoading
   && !props.errorText
-  && chartData.value.length > 0
+  && hasMeaningfulData.value
 )
 
 const chartOption = computed<EChartsOption>(() => ({
@@ -203,34 +207,41 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="space-y-2 rounded-lg border border-default p-3">
-    <p
-      v-if="isLoading"
-      class="text-sm text-muted"
-    >
-      Loading measurements...
-    </p>
+    <div class="h-70 w-full">
+      <p
+        v-if="isLoading"
+        class="flex h-full items-center justify-center text-sm text-muted"
+      >
+        Loading measurements...
+      </p>
 
-    <p
-      v-else-if="errorText"
-      class="text-sm text-error"
-    >
-      {{ errorText }}
-    </p>
+      <p
+        v-else-if="errorText"
+        class="flex h-full items-center justify-center text-sm text-error"
+      >
+        {{ errorText }}
+      </p>
 
-    <p
-      v-else-if="chartData.length === 0"
-      class="text-sm text-muted"
-    >
-      No measurements in the selected range.
-    </p>
-
-    <ClientOnly>
       <div
-        v-show="shouldRenderChart"
-        ref="chartEl"
-        aria-label="Activity measurements chart"
-        class="h-70 w-full"
-      />
-    </ClientOnly>
+        v-else-if="!hasMeaningfulData"
+        class="flex h-full items-center justify-center"
+      >
+        <UEmpty
+          icon="i-lucide-radio"
+          variant="naked"
+          title="No measurements"
+          description="No activity in the selected range."
+        />
+      </div>
+
+      <ClientOnly>
+        <div
+          v-show="shouldRenderChart"
+          ref="chartEl"
+          aria-label="Activity measurements chart"
+          class="h-full w-full"
+        />
+      </ClientOnly>
+    </div>
   </div>
 </template>

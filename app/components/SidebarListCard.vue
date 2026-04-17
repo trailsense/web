@@ -17,7 +17,7 @@
         variant="soft"
         class="shrink-0 rounded-full border-0 bg-green-100 text-green-900"
       >
-        0 Activations
+        {{ activationLabel }}
       </UBadge>
     </div>
 
@@ -30,11 +30,23 @@
 <script setup lang="ts">
 import { UBadge } from '#components'
 
-defineProps<{
+const props = withDefaults(defineProps<{
+  activationCount?: number | null
   id: string
   title: string
   subtitle: string
-}>()
+}>(), {
+  activationCount: null
+})
+
+const activationLabel = computed(() => {
+  if (props.activationCount === null || props.activationCount === undefined) {
+    return 'No Activations'
+  }
+
+  const formatted = new Intl.NumberFormat().format(props.activationCount)
+  return `${formatted} Activation${props.activationCount === 1 ? '' : 's'}`
+})
 
 defineEmits<{
   (e: 'select' | 'hover', id: string): void

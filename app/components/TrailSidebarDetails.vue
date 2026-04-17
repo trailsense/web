@@ -29,6 +29,10 @@
       ID: {{ trail.id }}
     </div>
 
+    <div class="text-xs text-dimmed">
+      Activations: {{ formatActivationCount(trail.activation_count) }}
+    </div>
+
     <div class="space-y-3 pt-8">
       <div class="flex items-baseline justify-between gap-2">
         <p class="text-sm font-medium">
@@ -77,4 +81,8 @@ const {
 
 const isTimeseriesLoading = computed(() => activityQuery.isLoading.value || activityQuery.isPending.value)
 const timeseriesErrorText = computed(() => (activityQuery.error.value ? 'Failed to load measurements for this range.' : ''))
+const formatActivationCount = (value: number | null | undefined) =>
+  value === null || value === undefined
+    ? 'No data'
+    : new Intl.NumberFormat().format(value)
 </script>

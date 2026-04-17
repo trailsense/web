@@ -33,6 +33,7 @@
         v-for="node in nodes"
         :id="node.id"
         :key="node.id"
+        :activation-count="node.activation_count"
         :subtitle="`Status: ${getNodeStatusLabel(node.status)}`"
         :title="node.name"
         @select="$emit('select', node.id)"

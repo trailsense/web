@@ -23,6 +23,7 @@
 
         <div>
           <p><strong>Send frequency:</strong> Every {{ node.send_frequency_seconds }}s</p>
+          <p><strong>Activations:</strong> {{ formatActivationCount(node.activation_count) }}</p>
         </div>
 
         <div class="text-xs space-y-1">
@@ -48,6 +49,11 @@ const statusClass = computed(() => {
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString()
+
+const formatActivationCount = (value: number | null | undefined) =>
+  value === null || value === undefined
+    ? 'No data'
+    : new Intl.NumberFormat().format(value)
 </script>
 
 <style scoped>

@@ -29,6 +29,7 @@
       <p><strong>Node ID:</strong> {{ node.id }}</p>
       <p><strong>Coordinates:</strong> {{ node.longitude }}, {{ node.latitude }}</p>
       <p><strong>Send frequency:</strong> Every {{ node.send_frequency_seconds }}s</p>
+      <p><strong>Activations:</strong> {{ formatActivationCount(node.activation_count) }}</p>
       <p><strong>Created:</strong> {{ formatDate(node.created_at) }}</p>
     </div>
 
@@ -85,4 +86,8 @@ const isTimeseriesLoading = computed(() => activityQuery.isLoading.value || acti
 const timeseriesErrorText = computed(() => (activityQuery.error.value ? 'Failed to load measurements for this range.' : ''))
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString()
+const formatActivationCount = (value: number | null | undefined) =>
+  value === null || value === undefined
+    ? 'No data'
+    : new Intl.NumberFormat().format(value)
 </script>

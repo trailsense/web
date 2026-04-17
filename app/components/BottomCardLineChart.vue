@@ -1,11 +1,11 @@
 <template>
   <ClientOnly>
-    <div class="w-full">
+    <div class="h-22 w-full">
       <div
         ref="chartEl"
-        :class="hasSelection && !isTimelineLoading && !timelineErrorText && sortedPoints.length > 0 ? 'block' : 'hidden'"
+        :class="shouldShowTimeline ? 'opacity-100' : 'pointer-events-none opacity-0'"
         aria-label="Bottom card timeline"
-        class="h-22 w-full"
+        class="h-22 w-full transition-opacity duration-150"
       />
     </div>
   </ClientOnly>
@@ -49,8 +49,6 @@ if (!dashboard) {
 
 const {
   activeMarkerId,
-  selectedNodeId,
-  selectedTrailId,
   setActiveMarker,
   granularity,
   timelinePoints,
@@ -61,15 +59,19 @@ const chartEl = ref<HTMLDivElement | null>(null)
 let chart: EChartsType | null = null
 let resizeObserver: ResizeObserver | null = null
 let isDraggingSelection = false
+let scrubDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let pendingMarkerId: string | null = null
 
-const hasSelection = computed(() =>
-  Boolean(selectedNodeId.value || selectedTrailId.value)
-)
+const SCRUB_DEBOUNCE_MS = 120
+
 const isTimelineLoading = computed(() =>
-  hasSelection.value && (timelineQuery.isLoading.value || timelineQuery.isPending.value)
+  timelineQuery.isLoading.value || timelineQuery.isPending.value
 )
 const timelineErrorText = computed(() =>
-  hasSelection.value && timelineQuery.error.value ? 'Failed to load timeline.' : ''
+  timelineQuery.error.value ? 'Failed to load timeline.' : ''
+)
+const shouldShowTimeline = computed(() =>
+  !isTimelineLoading.value && !timelineErrorText.value && sortedPoints.value.length > 0
 )
 
 const sortedPoints = computed(() =>
@@ -227,13 +229,50 @@ function indexFromPixelX(pixelX: number) {
   return Math.min(dateList.value.length - 1, Math.max(0, index))
 }
 
-function selectMarkerFromPixel(pixelX: number) {
+function applyMarkerSelection(markerId: string) {
+  if (!markerId || markerId === activeMarkerId.value) return
+  setActiveMarker(markerId)
+}
+
+function queueMarkerSelection(markerId: string) {
+  pendingMarkerId = markerId
+
+  if (scrubDebounceTimer) {
+    clearTimeout(scrubDebounceTimer)
+  }
+
+  scrubDebounceTimer = setTimeout(() => {
+    scrubDebounceTimer = null
+    if (!pendingMarkerId) return
+    applyMarkerSelection(pendingMarkerId)
+    pendingMarkerId = null
+  }, SCRUB_DEBOUNCE_MS)
+}
+
+function flushQueuedMarkerSelection() {
+  if (scrubDebounceTimer) {
+    clearTimeout(scrubDebounceTimer)
+    scrubDebounceTimer = null
+  }
+
+  if (!pendingMarkerId) return
+  applyMarkerSelection(pendingMarkerId)
+  pendingMarkerId = null
+}
+
+function selectMarkerFromPixel(pixelX: number, debounced = false) {
   const index = indexFromPixelX(pixelX)
   if (index < 0) return
 
   const markerId = dateList.value[index]
   if (!markerId || markerId === activeMarkerId.value) return
-  setActiveMarker(markerId)
+
+  if (debounced) {
+    queueMarkerSelection(markerId)
+    return
+  }
+
+  applyMarkerSelection(markerId)
 }
 
 function updateSelectionGraphics() {
@@ -297,6 +336,7 @@ function bindChartInteraction() {
   zr.off('globalout')
 
   zr.on('click', (event) => {
+    flushQueuedMarkerSelection()
     selectMarkerFromPixel(event.offsetX)
   })
 
@@ -308,15 +348,17 @@ function bindChartInteraction() {
 
   zr.on('mousemove', (event) => {
     if (!isDraggingSelection) return
-    selectMarkerFromPixel(event.offsetX)
+    selectMarkerFromPixel(event.offsetX, true)
   })
 
   zr.on('mouseup', () => {
     isDraggingSelection = false
+    flushQueuedMarkerSelection()
   })
 
   zr.on('globalout', () => {
     isDraggingSelection = false
+    flushQueuedMarkerSelection()
   })
 }
 
@@ -328,7 +370,7 @@ function ensureChartInitialized() {
 }
 
 function renderChart() {
-  if (!chartEl.value || sortedPoints.value.length === 0 || isTimelineLoading.value || timelineErrorText.value || !hasSelection.value) {
+  if (!chartEl.value || !shouldShowTimeline.value) {
     return
   }
 
@@ -351,7 +393,6 @@ function setupResizeObserver() {
 
 watch(
   () => [
-    hasSelection.value,
     isTimelineLoading.value,
     timelineErrorText.value,
     sortedPoints.value.length,
@@ -382,6 +423,7 @@ watch(chartEl, () => {
 })
 
 onBeforeUnmount(() => {
+  flushQueuedMarkerSelection()
   resizeObserver?.disconnect()
   resizeObserver = null
 

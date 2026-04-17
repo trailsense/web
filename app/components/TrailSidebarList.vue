@@ -8,7 +8,7 @@
       v-if="trails.length === 0"
       class="px-4 py-2 text-sm text-muted"
     >
-      No trails in current map view.
+      No trails near the current map center.
     </div>
 
     <div
@@ -19,6 +19,7 @@
         v-for="trail in trails"
         :id="trail.id"
         :key="trail.id"
+        :activation-count="trail.activation_count"
         :subtitle="`Source: ${trail.source}`"
         :title="trail.name"
         @select="$emit('select', trail.id)"

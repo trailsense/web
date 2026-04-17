@@ -9,7 +9,6 @@
   >
     <mgl-marker
       v-for="node in nodes"
-      v-show="mode === 'nodes'"
       :key="node.id"
       :coordinates="[node.longitude, node.latitude]"
     >
@@ -35,7 +34,7 @@
         layer-id="trails-line"
         :layout="{ 'line-join': 'round', 'line-cap': 'round' }"
         :paint="trailPaint"
-        :visibility="mode === 'trails' ? 'visible' : 'none'"
+        visibility="visible"
       />
     </mgl-geo-json-source>
 
@@ -71,8 +70,11 @@ const mapRef = ref<{ map: MapLibreMap } | null>(null)
 const hoveredTrailId = ref<string | null>(null)
 
 const style = '/map/style.json'
-const center: [number, number] = [11.393, 47.287]
+const center: [number, number] = dashboard
+  ? [dashboard.mapCenter.value.lon, dashboard.mapCenter.value.lat]
+  : [11.393, 47.287]
 const zoom = 13
+const CENTER_SYNC_EPSILON = 0.000001
 const CAMERA_MARGIN = 24
 const EDGE_PROXIMITY = 28
 const EDGE_COVERAGE_RATIO = 0.35
@@ -260,15 +262,22 @@ function getFitBoundsPadding(): CameraPadding {
   }
 }
 
-function updateBbox() {
+function updateMapCenter() {
   const map = getMap()
   if (!map || !dashboard) return
-  const b = map.getBounds()
-  dashboard.setTrailBbox({
-    min_lon: b.getWest(),
-    min_lat: b.getSouth(),
-    max_lon: b.getEast(),
-    max_lat: b.getNorth()
+  const mapCenter = map.getCenter()
+  const currentCenter = dashboard.mapCenter.value
+
+  const centerChanged = (
+    Math.abs(currentCenter.lon - mapCenter.lng) > CENTER_SYNC_EPSILON
+    || Math.abs(currentCenter.lat - mapCenter.lat) > CENTER_SYNC_EPSILON
+  )
+
+  if (!centerChanged) return
+
+  dashboard.setMapCenter({
+    lon: mapCenter.lng,
+    lat: mapCenter.lat
   })
 }
 
@@ -276,8 +285,8 @@ const onMapLoad = () => {
   const map = getMap()
   if (!map) return
 
-  updateBbox()
-  map.on('moveend', updateBbox)
+  updateMapCenter()
+  map.on('moveend', updateMapCenter)
 
   map.on('mousemove', 'trails-line', (e) => {
     const feature = e.features?.[0]
@@ -306,21 +315,24 @@ const onMapLoad = () => {
 }
 
 watch(
-  () => props.selectedNode,
-  (node) => {
+  () => props.selectedNode?.id ?? null,
+  (nodeId, previousNodeId) => {
     const map = getMap()
     if (!map) return
 
-    if (node) {
-      map.flyTo({
-        center: [node.longitude, node.latitude],
-        zoom: 14,
-        speed: 1,
-        curve: 1.4,
-        padding: getCameraPadding(),
-        essential: true
-      })
-    }
+    if (!nodeId || nodeId === previousNodeId) return
+
+    const node = props.selectedNode
+    if (!node) return
+
+    map.flyTo({
+      center: [node.longitude, node.latitude],
+      zoom: 14,
+      speed: 1,
+      curve: 1.4,
+      padding: getCameraPadding(),
+      essential: true
+    })
   }
 )
 
