@@ -32,7 +32,7 @@
         v-if="!isSidebarCollapsed"
         class="flex min-h-0 flex-1 flex-col"
       >
-        <div class="px-4 pb-4 pt-2">
+        <div class="px-4 pt-2">
           <UTabs
             v-model="viewMode"
             :content="false"

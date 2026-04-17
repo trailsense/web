@@ -127,10 +127,10 @@ const trailPaint = computed<Record<string, unknown>>(() => ({
   'line-color': [
     'case',
     ['==', ['get', 'id'], props.selectedTrailId],
-    '#15803d',
+    '#2f5a49',
     ['==', ['get', 'id'], effectiveHoveredTrailId.value],
-    '#15803d',
-    '#16a34a'
+    '#2f5a49',
+    '#4a7562'
   ],
   'line-color-transition': {
     duration: 180,

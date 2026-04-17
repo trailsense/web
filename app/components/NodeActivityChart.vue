@@ -151,7 +151,7 @@ const chartOption = computed<EChartsOption>(() => ({
       data: chartData.value.map(item => item.count),
       barMaxWidth: 18,
       itemStyle: {
-        color: '#80d7b7',
+        color: '#6a704c',
         borderRadius: [6, 6, 0, 0]
       }
     }
@@ -229,7 +229,7 @@ onBeforeUnmount(() => {
         v-show="shouldRenderChart"
         ref="chartEl"
         aria-label="Activity measurements chart"
-        class="h-[280px] w-full"
+        class="h-70 w-full"
       />
     </ClientOnly>
   </div>

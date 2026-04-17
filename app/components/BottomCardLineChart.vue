@@ -114,10 +114,10 @@ const getSeries = (): LineSeriesOption => ({
   symbolSize: 3,
   lineStyle: {
     width: 2,
-    color: '#80d7b7'
+    color: '#6a704c'
   },
   itemStyle: {
-    color: '#80d7b7'
+    color: '#6a704c'
   },
   markLine: selectedIndex.value >= 0
     ? {

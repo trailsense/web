@@ -15,7 +15,7 @@
       <UBadge
         color="secondary"
         variant="soft"
-        class="shrink-0 rounded-full border-0 bg-lavender-100 text-lavender-900"
+        class="shrink-0 rounded-full border-0 bg-green-100 text-green-900"
       >
         0 Activations
       </UBadge>
