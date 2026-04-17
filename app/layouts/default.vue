@@ -1,13 +1,13 @@
 <template>
   <div
-    class="relative h-screen w-full overflow-hidden [--layout-gap:1rem] [--sidebar-width:min(22rem,calc(100%-1.5rem))] [--bottom-card-height:8rem]"
+    class="relative h-screen w-full overflow-hidden [--layout-gap:1rem] [--sidebar-width:min(22rem,calc(100%-1.5rem))]"
   >
     <div class="h-full w-full">
       <slot :view-mode="viewMode" />
     </div>
 
     <aside
-      :class="isSidebarCollapsed ? 'w-[var(--sidebar-width)] flex-col' : 'bottom-4 h-auto w-[var(--sidebar-width)] flex-col'"
+      :class="isSidebarCollapsed ? 'w-(--sidebar-width) flex-col' : 'bottom-4 h-auto w-(--sidebar-width) flex-col'"
       class="absolute left-4 top-4 z-40 flex overflow-hidden rounded-3xl border border-default bg-default shadow-sm backdrop-blur transition-all duration-300 ease-in-out"
       data-map-overlay="sidebar"
     >
@@ -72,30 +72,33 @@
     </aside>
 
     <div
-      class="pointer-events-none absolute left-[var(--layout-gap)] right-[var(--layout-gap)] z-[46]"
+      class="absolute bottom-(--layout-gap) left-(--layout-gap) right-(--layout-gap) z-46"
       :class="!isSidebarCollapsed ? 'lg:left-[calc(var(--layout-gap)+var(--sidebar-width)+var(--layout-gap))]' : ''"
-      style="bottom: calc(var(--layout-gap) + var(--bottom-card-height) + 0.5rem);"
     >
-      <div class="pointer-events-auto">
-        <slot name="bottom-card-controls" />
+      <div class="relative">
+        <div class="pointer-events-none absolute bottom-full right-0 mb-2">
+          <div class="pointer-events-auto">
+            <slot name="bottom-card-controls" />
+          </div>
+        </div>
+
+        <FloatingBottomCard>
+          <slot
+            :view-mode="viewMode"
+            name="bottom-card"
+          >
+            <div class="w-full">
+              <p class="font-h3 text-highlighted">
+                Bottom Card
+              </p>
+              <p class="mt-1 font-body-small text-muted">
+                This floating card is ready. Provide the bottom-card slot to customize its content.
+              </p>
+            </div>
+          </slot>
+        </FloatingBottomCard>
       </div>
     </div>
-
-    <FloatingBottomCard :sidebar-collapsed="isSidebarCollapsed">
-      <slot
-        :view-mode="viewMode"
-        name="bottom-card"
-      >
-        <div class="w-full">
-          <p class="font-h3 text-highlighted">
-            Bottom Card
-          </p>
-          <p class="mt-1 font-body-small text-muted">
-            This floating card is ready. Provide the bottom-card slot to customize its content.
-          </p>
-        </div>
-      </slot>
-    </FloatingBottomCard>
   </div>
 </template>
 

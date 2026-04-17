@@ -105,6 +105,7 @@ const selectNodeHandler = (id: string | null) => {
 }
 
 const selectTrailHandler = (id: string | null) => {
+  hoveredTrailId.value = null
   selectTrail(id)
   viewMode.value = 'trails'
 }

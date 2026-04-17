@@ -1,35 +1,30 @@
 <template>
   <div class="py-2">
-    <p class="px-3 pb-2 text-xs font-semibold text-muted uppercase tracking-wide">
+    <p class="px-4 pb-4 font-body-small text-muted">
       Trails
     </p>
 
     <div
       v-if="trails.length === 0"
-      class="px-3 py-6 text-sm text-muted"
+      class="px-4 py-2 text-sm text-muted"
     >
       No trails in current map view.
     </div>
 
     <div
       v-else
-      class="space-y-1"
+      class="space-y-3"
     >
-      <div
+      <SidebarListCard
         v-for="trail in trails"
+        :id="trail.id"
         :key="trail.id"
-        class="cursor-pointer rounded-md px-3 py-2 hover:bg-muted"
-        @click="$emit('select', trail.id)"
-        @mouseenter="$emit('hover', trail.id)"
-        @mouseleave="$emit('leave')"
-      >
-        <p class="text-sm font-medium">
-          {{ trail.name }}
-        </p>
-        <p class="text-xs text-muted">
-          Source: {{ trail.source }}
-        </p>
-      </div>
+        :subtitle="`Source: ${trail.source}`"
+        :title="trail.name"
+        @select="$emit('select', trail.id)"
+        @hover="$emit('hover', trail.id)"
+        @leave="$emit('leave')"
+      />
     </div>
   </div>
 </template>

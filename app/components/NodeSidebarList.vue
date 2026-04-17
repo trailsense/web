@@ -29,13 +29,15 @@
       v-else
       class="space-y-3"
     >
-      <NodeListItem
+      <SidebarListCard
         v-for="node in nodes"
+        :id="node.id"
         :key="node.id"
-        :node="node"
+        :subtitle="`Every ${node.send_frequency_seconds}s`"
+        :title="node.name"
         @select="$emit('select', node.id)"
-        @mouseenter="$emit('hover', node.id)"
-        @mouseleave="$emit('leave')"
+        @hover="$emit('hover', node.id)"
+        @leave="$emit('leave')"
       />
     </div>
   </div>
