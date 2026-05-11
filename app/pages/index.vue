@@ -22,6 +22,8 @@
       <template v-else>
         <TrailSidebarList
           v-if="!selectedTrail"
+          :error-text="trailsErrorText"
+          :is-loading="isTrailsLoading"
           :trails="trails"
           @select="selectTrailHandler"
           @hover="hoveredTrailId = $event"
@@ -34,6 +36,13 @@
           @back="backFromTrail"
         />
       </template>
+    </template>
+
+    <template #bottom-card>
+      <BottomCardLineChart />
+    </template>
+    <template #bottom-card-controls>
+      <BottomTimelineGranularitySelect />
     </template>
 
     <MapView
@@ -68,28 +77,36 @@ const {
   nodes,
   nodesQuery,
   selectedNode,
+  selectedTrail,
+  selectedTrailId,
   selectNode,
-  trails
+  selectTrail,
+  trails,
+  trailsQuery
 } = dashboard
 
-const isNodesLoading = computed(() => nodesQuery.isLoading.value || nodesQuery.isPending.value)
-const nodesErrorText = computed(() => (nodesQuery.error.value ? 'Failed to load nodes.' : ''))
+const isNodesLoading = computed(() =>
+  nodes.value.length === 0 && (nodesQuery.isLoading.value || nodesQuery.isPending.value)
+)
+const nodesErrorText = computed(() =>
+  nodes.value.length === 0 && nodesQuery.error.value ? 'Failed to load nodes.' : ''
+)
+const isTrailsLoading = computed(() =>
+  trails.value.length === 0 && (trailsQuery.isLoading.value || trailsQuery.isPending.value)
+)
+const trailsErrorText = computed(() =>
+  trails.value.length === 0 && trailsQuery.error.value ? 'Failed to load trails.' : ''
+)
 
 const hoveredNodeId = ref<string | null>(null)
 
 provide(TRAIL_DASHBOARD_KEY, dashboard)
 
-const selectedTrailId = ref<string | null>(null)
-
-const selectedTrail = computed(() =>
-  trails.value.find(t => t.id === selectedTrailId.value) ?? null
-)
-
 const viewMode = useState<'nodes' | 'trails'>('dashboard:viewMode')
 
 watch(viewMode, (newMode) => {
   if (newMode === 'nodes' && selectedTrailId.value) {
-    selectedTrailId.value = null
+    selectTrail(null)
   } else if (newMode === 'trails' && selectedNode.value) {
     selectNode(null)
   }
@@ -101,7 +118,8 @@ const selectNodeHandler = (id: string | null) => {
 }
 
 const selectTrailHandler = (id: string | null) => {
-  selectedTrailId.value = id
+  hoveredTrailId.value = null
+  selectTrail(id)
   viewMode.value = 'trails'
 }
 
@@ -110,6 +128,6 @@ const backFromNode = () => {
 }
 
 const backFromTrail = () => {
-  selectedTrailId.value = null
+  selectTrail(null)
 }
 </script>

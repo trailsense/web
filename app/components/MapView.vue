@@ -9,7 +9,6 @@
   >
     <mgl-marker
       v-for="node in nodes"
-      v-show="mode === 'nodes'"
       :key="node.id"
       :coordinates="[node.longitude, node.latitude]"
     >
@@ -35,7 +34,7 @@
         layer-id="trails-line"
         :layout="{ 'line-join': 'round', 'line-cap': 'round' }"
         :paint="trailPaint"
-        :visibility="mode === 'trails' ? 'visible' : 'none'"
+        visibility="visible"
       />
     </mgl-geo-json-source>
 
@@ -71,8 +70,22 @@ const mapRef = ref<{ map: MapLibreMap } | null>(null)
 const hoveredTrailId = ref<string | null>(null)
 
 const style = '/map/style.json'
-const center: [number, number] = [13.0867, 47.7239]
+const center: [number, number] = dashboard
+  ? [dashboard.mapCenter.value.lon, dashboard.mapCenter.value.lat]
+  : [11.393, 47.287]
 const zoom = 13
+const CENTER_SYNC_EPSILON = 0.000001
+const CAMERA_MARGIN = 24
+const EDGE_PROXIMITY = 28
+const EDGE_COVERAGE_RATIO = 0.35
+const EDGE_BAND_RATIO = 0.45
+
+type CameraPadding = {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
 
 type TrailGeoJsonProperties = {
   id: string
@@ -103,40 +116,168 @@ const trailGeoJson = computed<GeoJSON.FeatureCollection<GeoJSON.MultiLineString,
   }
 })
 
-const effectiveHoveredTrailId = computed(() => props.hoveredTrailIdFromList ?? hoveredTrailId.value)
+const effectiveHoveredTrailId = computed(() => {
+  const hoveredTrailIdValue = props.hoveredTrailIdFromList ?? hoveredTrailId.value
+
+  if (!hoveredTrailIdValue) return null
+  if (props.selectedTrailId && hoveredTrailIdValue !== props.selectedTrailId) return null
+
+  return hoveredTrailIdValue
+})
 
 const trailPaint = computed<Record<string, unknown>>(() => ({
   'line-color': [
     'case',
     ['==', ['get', 'id'], props.selectedTrailId],
-    '#15803d',
+    '#2f5a49',
     ['==', ['get', 'id'], effectiveHoveredTrailId.value],
-    '#15803d',
-    '#16a34a'
+    '#2f5a49',
+    '#4a7562'
   ],
+  'line-color-transition': {
+    duration: 180,
+    delay: 0
+  },
   'line-width': [
     'case',
     ['==', ['get', 'id'], props.selectedTrailId],
-    4,
+    4.5,
     ['==', ['get', 'id'], effectiveHoveredTrailId.value],
-    4,
+    4.5,
     2
-  ]
+  ],
+  'line-width-transition': {
+    duration: 240,
+    delay: 0
+  }
 }))
 
 function getMap() {
   return mapRef.value?.map
 }
 
-function updateBbox() {
+function getCameraPadding(): CameraPadding {
+  const map = getMap()
+
+  const padding: CameraPadding = {
+    top: CAMERA_MARGIN,
+    right: CAMERA_MARGIN,
+    bottom: CAMERA_MARGIN,
+    left: CAMERA_MARGIN
+  }
+
+  if (!map) return padding
+
+  const mapRect = map.getContainer().getBoundingClientRect()
+  const minVerticalCoverage = mapRect.height * EDGE_COVERAGE_RATIO
+  const minHorizontalCoverage = mapRect.width * EDGE_COVERAGE_RATIO
+
+  const overlays = Array.from(document.querySelectorAll<HTMLElement>('[data-map-overlay]'))
+
+  overlays.forEach((overlay) => {
+    const style = window.getComputedStyle(overlay)
+
+    if (style.display === 'none' || style.visibility === 'hidden') return
+
+    const rect = overlay.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+
+    const intersectLeft = Math.max(rect.left, mapRect.left)
+    const intersectTop = Math.max(rect.top, mapRect.top)
+    const intersectRight = Math.min(rect.right, mapRect.right)
+    const intersectBottom = Math.min(rect.bottom, mapRect.bottom)
+
+    if (intersectRight <= intersectLeft || intersectBottom <= intersectTop) return
+
+    const overlapWidth = intersectRight - intersectLeft
+    const overlapHeight = intersectBottom - intersectTop
+
+    const nearLeft = rect.left <= mapRect.left + EDGE_PROXIMITY
+    const nearRight = rect.right >= mapRect.right - EDGE_PROXIMITY
+    const nearTop = rect.top <= mapRect.top + EDGE_PROXIMITY
+    const nearBottom = rect.bottom >= mapRect.bottom - EDGE_PROXIMITY
+
+    if (nearLeft && overlapHeight >= minVerticalCoverage) {
+      const coverFromLeft = intersectRight - mapRect.left
+      padding.left = Math.max(padding.left, Math.ceil(coverFromLeft + CAMERA_MARGIN))
+    }
+
+    if (nearRight && overlapHeight >= minVerticalCoverage) {
+      const coverFromRight = mapRect.right - intersectLeft
+      padding.right = Math.max(padding.right, Math.ceil(coverFromRight + CAMERA_MARGIN))
+    }
+
+    if (nearTop && overlapWidth >= minHorizontalCoverage && overlapHeight <= mapRect.height * EDGE_BAND_RATIO) {
+      const coverFromTop = intersectBottom - mapRect.top
+      padding.top = Math.max(padding.top, Math.ceil(coverFromTop + CAMERA_MARGIN))
+    }
+
+    if (nearBottom && overlapWidth >= minHorizontalCoverage && overlapHeight <= mapRect.height * EDGE_BAND_RATIO) {
+      const coverFromBottom = mapRect.bottom - intersectTop
+      padding.bottom = Math.max(padding.bottom, Math.ceil(coverFromBottom + CAMERA_MARGIN))
+    }
+  })
+
+  return padding
+}
+
+function getFitBoundsPadding(): CameraPadding {
+  const map = getMap()
+  const mapRect = map?.getContainer().getBoundingClientRect()
+
+  if (!map || !mapRect) {
+    return {
+      top: CAMERA_MARGIN,
+      right: CAMERA_MARGIN,
+      bottom: CAMERA_MARGIN,
+      left: CAMERA_MARGIN
+    }
+  }
+
+  // For trail fitting, use balanced padding to center content in the visible area
+  const overlays = Array.from(document.querySelectorAll<HTMLElement>('[data-map-overlay]'))
+  let maxLeftSpace = 0
+  let maxRightSpace = 0
+
+  overlays.forEach((overlay) => {
+    const style = window.getComputedStyle(overlay)
+    if (style.display === 'none' || style.visibility === 'hidden') return
+
+    const rect = overlay.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+
+    if (rect.right <= mapRect.left + mapRect.width / 2) {
+      maxLeftSpace = Math.max(maxLeftSpace, rect.right - mapRect.left)
+    } else {
+      maxRightSpace = Math.max(maxRightSpace, mapRect.right - rect.left)
+    }
+  })
+
+  // Use minimal padding to avoid excessive zoom-out while slightly offsetting for overlays
+  return {
+    top: CAMERA_MARGIN,
+    right: Math.max(CAMERA_MARGIN, maxRightSpace * 0.15),
+    bottom: CAMERA_MARGIN,
+    left: Math.max(CAMERA_MARGIN, maxLeftSpace * 0.15)
+  }
+}
+
+function updateMapCenter() {
   const map = getMap()
   if (!map || !dashboard) return
-  const b = map.getBounds()
-  dashboard.setTrailBbox({
-    min_lon: b.getWest(),
-    min_lat: b.getSouth(),
-    max_lon: b.getEast(),
-    max_lat: b.getNorth()
+  const mapCenter = map.getCenter()
+  const currentCenter = dashboard.mapCenter.value
+
+  const centerChanged = (
+    Math.abs(currentCenter.lon - mapCenter.lng) > CENTER_SYNC_EPSILON
+    || Math.abs(currentCenter.lat - mapCenter.lat) > CENTER_SYNC_EPSILON
+  )
+
+  if (!centerChanged) return
+
+  dashboard.setMapCenter({
+    lon: mapCenter.lng,
+    lat: mapCenter.lat
   })
 }
 
@@ -144,8 +285,8 @@ const onMapLoad = () => {
   const map = getMap()
   if (!map) return
 
-  updateBbox()
-  map.on('moveend', updateBbox)
+  updateMapCenter()
+  map.on('moveend', updateMapCenter)
 
   map.on('mousemove', 'trails-line', (e) => {
     const feature = e.features?.[0]
@@ -174,28 +315,24 @@ const onMapLoad = () => {
 }
 
 watch(
-  () => props.selectedNode,
-  (node) => {
+  () => props.selectedNode?.id ?? null,
+  (nodeId, previousNodeId) => {
     const map = getMap()
     if (!map) return
 
-    if (node) {
-      map.flyTo({
-        center: [node.longitude, node.latitude],
-        zoom: 14,
-        speed: 1,
-        curve: 1.4,
-        essential: true
-      })
-    } else {
-      map.flyTo({
-        center,
-        zoom,
-        speed: 1,
-        curve: 1.4,
-        essential: true
-      })
-    }
+    if (!nodeId || nodeId === previousNodeId) return
+
+    const node = props.selectedNode
+    if (!node) return
+
+    map.flyTo({
+      center: [node.longitude, node.latitude],
+      zoom: 14,
+      speed: 1,
+      curve: 1.4,
+      padding: getCameraPadding(),
+      essential: true
+    })
   }
 )
 
@@ -205,16 +342,7 @@ watch(
     const map = getMap()
     if (!map) return
 
-    if (!id) {
-      map.flyTo({
-        center,
-        zoom,
-        speed: 1,
-        curve: 1.4,
-        essential: true
-      })
-      return
-    }
+    if (!id) return
 
     const trail = props.trails.find(t => t.id === id)
     const coords = trail?.geometry_geojson?.coordinates
@@ -226,7 +354,11 @@ watch(
       line.forEach(coord => bounds.extend(coord as [number, number]))
     })
 
-    map.fitBounds(bounds, { padding: 40, duration: 600 })
+    map.fitBounds(bounds, {
+      padding: getFitBoundsPadding(),
+      duration: 1200,
+      easing: t => 1 - Math.pow(1 - t, 3)
+    })
   }
 )
 </script>

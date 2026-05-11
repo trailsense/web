@@ -1,41 +1,60 @@
 <template>
   <div class="py-2">
-    <p class="px-3 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-      Trail Nodes
-    </p>
-
-    <p
-      v-if="isLoading"
-      class="px-3 py-2 text-sm text-gray-500"
-    >
-      Loading nodes...
-    </p>
-
-    <p
-      v-else-if="errorText"
-      class="px-3 py-2 text-sm text-red-600"
-    >
-      {{ errorText }}
-    </p>
-
-    <p
-      v-else-if="nodes.length === 0"
-      class="px-3 py-2 text-sm text-gray-500"
-    >
-      No nodes available.
+    <p class="px-4 pb-4 font-body-small text-muted">
+      Available Nodes
     </p>
 
     <div
-      v-else
-      class="space-y-1"
+      v-if="isLoading"
+      class="px-4 py-2"
     >
-      <NodeListItem
+      <div class="flex items-center gap-2 text-sm text-muted">
+        <UIcon
+          name="i-lucide-loader-2"
+          class="size-4 animate-spin"
+        />
+        <span>Loading nodes...</span>
+      </div>
+    </div>
+
+    <div
+      v-else-if="errorText"
+      class="px-4 py-2"
+    >
+      <UAlert
+        color="error"
+        variant="soft"
+        title="Failed to load nodes"
+        :description="errorText"
+      />
+    </div>
+
+    <div
+      v-else-if="nodes.length === 0"
+      class="px-4 py-2"
+    >
+      <UEmpty
+        icon="i-lucide-radio"
+        variant="naked"
+        title="No nodes"
+        description="No nodes available in this area."
+      />
+    </div>
+
+    <div
+      v-else
+      class="space-y-3"
+    >
+      <SidebarListCard
         v-for="node in nodes"
+        :id="node.id"
         :key="node.id"
-        :node="node"
+        :activation-count="node.activation_count"
+        :subtitle="`Status: ${getNodeStatusLabel(node.status)}`"
+        :title="node.name"
         @select="$emit('select', node.id)"
-        @mouseenter="$emit('hover', node.id)"
-        @mouseleave="$emit('leave')"
+        @hover="$emit('hover', node.id)"
+        @leave="$emit('leave')"
       />
     </div>
   </div>
@@ -43,6 +62,7 @@
 
 <script setup lang="ts">
 import type { NodeDto } from '~/lib/api/types.gen'
+import { getNodeStatusLabel } from '~/utils/node-status'
 
 withDefaults(defineProps<{
   nodes: NodeDto[]

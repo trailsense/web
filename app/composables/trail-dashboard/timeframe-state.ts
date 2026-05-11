@@ -1,13 +1,5 @@
 import type { TimeseriesBucket } from '~/lib/api/types.gen'
-import type { DashboardPeriod } from './types'
-
-const DAY_MS = 24 * 60 * 60 * 1000
-const HOUR_MS = 60 * 60 * 1000
-
-const parseDate = (input: string, fallback: Date): Date => {
-  const date = new Date(input)
-  return Number.isNaN(date.getTime()) ? fallback : date
-}
+import type { DashboardGranularity, TimelineMarker } from './types'
 
 const nowRoundedToHour = () => {
   const now = new Date()
@@ -15,11 +7,13 @@ const nowRoundedToHour = () => {
   return now
 }
 
-const defaultCustomRange = (bucket: TimeseriesBucket) => {
-  const to = nowRoundedToHour()
-  const from = new Date(to)
-  from.setDate(from.getDate() - (bucket === 'hour' ? 7 : 30))
-  return { from: from.toISOString(), to: to.toISOString() }
+const clampWeeklyFromWithinYear = (from: Date, to: Date) => {
+  const maxRangeMs = 365 * 24 * 60 * 60 * 1000
+  const diff = to.getTime() - from.getTime()
+  if (diff <= maxRangeMs) return from
+
+  // Keep week alignment while ensuring range stays within 1 year.
+  return addDays(from, 7)
 }
 
 const startOfDay = (date: Date) => {
@@ -36,211 +30,166 @@ const startOfWeek = (date: Date) => {
   return next
 }
 
-const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1)
-
 const addDays = (date: Date, amount: number) => {
   const next = new Date(date)
   next.setDate(next.getDate() + amount)
   return next
 }
 
-const addMonths = (date: Date, amount: number) => {
-  const next = new Date(date)
-  next.setMonth(next.getMonth() + amount)
-  return next
+const parseDate = (input: string): Date | null => {
+  const parsed = new Date(input)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed
 }
 
-const getPeriodBounds = (period: DashboardPeriod, anchor: Date) => {
-  if (period === 'daily') {
-    const from = startOfDay(anchor)
-    return {
-      bucket: 'hour' as TimeseriesBucket,
-      from,
-      to: addDays(from, 1)
+const pickClosestMarkerId = (targetMarkerId: string | null, markerIds: string[]) => {
+  if (markerIds.length === 0) return null
+  if (!targetMarkerId) return null
+
+  const targetDate = parseDate(targetMarkerId)
+  if (!targetDate) return null
+
+  let closestId: string | null = null
+  let smallestDiff = Number.POSITIVE_INFINITY
+
+  markerIds.forEach((id) => {
+    const markerDate = parseDate(id)
+    if (!markerDate) return
+
+    const diff = Math.abs(markerDate.getTime() - targetDate.getTime())
+    if (diff < smallestDiff) {
+      smallestDiff = diff
+      closestId = id
     }
-  }
-
-  if (period === 'weekly') {
-    const from = startOfWeek(anchor)
-    return {
-      bucket: 'day' as TimeseriesBucket,
-      from,
-      to: addDays(from, 7)
-    }
-  }
-
-  const from = startOfMonth(anchor)
-  return {
-    bucket: 'day' as TimeseriesBucket,
-    from,
-    to: addMonths(from, 1)
-  }
-}
-
-const shiftPeriodStart = (period: DashboardPeriod, start: Date, direction: -1 | 1) => {
-  if (period === 'daily') {
-    return addDays(start, direction)
-  }
-
-  if (period === 'weekly') {
-    return addDays(start, direction * 7)
-  }
-
-  if (period === 'custom') {
-    return start
-  }
-
-  return addMonths(start, direction)
-}
-
-export function useTrailDashboardTimeframeState() {
-  const period = useState<DashboardPeriod>('dashboard:period', () => 'weekly')
-  const periodAnchor = useState<string>('dashboard:periodAnchor', () => nowRoundedToHour().toISOString())
-  const customBucket = useState<TimeseriesBucket | undefined>('dashboard:customBucket', () => 'day')
-  const customRangeFrom = useState<string>('dashboard:customRangeFrom', () => defaultCustomRange('day').from)
-  const customRangeTo = useState<string>('dashboard:customRangeTo', () => defaultCustomRange('day').to)
-
-  const normalizeCustomRange = () => {
-    const fallbackTo = nowRoundedToHour()
-    let to = parseDate(customRangeTo.value, fallbackTo)
-    const from = parseDate(customRangeFrom.value, new Date(to.getTime() - 7 * DAY_MS))
-
-    if (to <= from) {
-      to = new Date(from.getTime() + HOUR_MS)
-    }
-
-    customRangeFrom.value = from.toISOString()
-    customRangeTo.value = to.toISOString()
-  }
-
-  const periodBounds = computed(() =>
-    getPeriodBounds(period.value, parseDate(periodAnchor.value, nowRoundedToHour()))
-  )
-
-  const autoBucketForRange = (from: Date, to: Date): TimeseriesBucket => {
-    const days = (to.getTime() - from.getTime()) / DAY_MS
-
-    if (days <= 1) return 'hour'
-    if (days <= 30) return 'day'
-    return 'week'
-  }
-
-  const bucket = computed(() => {
-    if (period.value !== 'custom') {
-      return periodBounds.value.bucket
-    }
-
-    const from = parseDate(customRangeFrom.value, nowRoundedToHour())
-    const to = parseDate(customRangeTo.value, nowRoundedToHour())
-
-    if (!customBucket.value) {
-      return autoBucketForRange(from, to)
-    }
-
-    return customBucket.value
   })
 
-  const rangeFrom = computed(() => (period.value === 'custom' ? customRangeFrom.value : periodBounds.value.from.toISOString()))
-  const rangeTo = computed(() => (period.value === 'custom' ? customRangeTo.value : periodBounds.value.to.toISOString()))
-  const currentPeriodStart = computed(() => getPeriodBounds(period.value, nowRoundedToHour()).from.getTime())
+  return closestId
+}
 
-  const setPeriod = (nextPeriod: DashboardPeriod) => {
-    if (period.value === nextPeriod) return
+const granularityLabel = (bucketStart: string, granularity: DashboardGranularity) => {
+  const parsed = parseDate(bucketStart)
+  if (!parsed) return ''
 
-    period.value = nextPeriod
-
-    if (nextPeriod !== 'custom') {
-      periodAnchor.value = nowRoundedToHour().toISOString()
-    }
-  }
-
-  const shiftPeriod = (direction: -1 | 1) => {
-    if (period.value === 'custom') return
-
-    let windowStart = periodBounds.value.from
-    if (period.value === 'weekly') {
-      windowStart = addDays(windowStart, direction * 7)
-    } else if (period.value === 'daily') {
-      windowStart = addDays(windowStart, direction)
-    } else if (period.value === 'monthly') {
-      windowStart = addMonths(windowStart, direction)
-    }
-
-    periodAnchor.value = windowStart.toISOString()
-  }
-
-  const canShiftForward = computed(
-    () => period.value !== 'custom'
-      && shiftPeriodStart(period.value, periodBounds.value.from, 1).getTime() <= currentPeriodStart.value
-  )
-
-  const periodLabel = computed(() => {
-    if (period.value === 'custom') {
-      const from = parseDate(customRangeFrom.value, nowRoundedToHour())
-      const toExclusive = parseDate(customRangeTo.value, nowRoundedToHour())
-      const toInclusive = new Date(toExclusive.getTime() - 1)
-      const format = new Intl.DateTimeFormat(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
-      return `${format.format(from)} - ${format.format(toInclusive)}`
-    }
-
-    const start = periodBounds.value.from
-
-    if (period.value === 'daily') {
-      return new Intl.DateTimeFormat(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      }).format(start)
-    }
-
-    if (period.value === 'weekly') {
-      const end = addDays(periodBounds.value.to, -1)
-      const format = new Intl.DateTimeFormat(undefined, {
-        month: 'short',
-        day: 'numeric'
-      })
-      return `${format.format(start)} - ${format.format(end)}`
-    }
-
-    return new Intl.DateTimeFormat(undefined, {
-      month: 'long',
+  if (granularity === 'week') {
+    return `Week of ${new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
       year: 'numeric'
-    }).format(start)
+    }).format(startOfWeek(parsed))}`
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(startOfDay(parsed))
+}
+
+export function useTrailDashboardTimelineState() {
+  const granularity = useState<DashboardGranularity>('dashboard:timeline:granularity', () => 'day')
+  const markers = useState<TimelineMarker[]>('dashboard:timeline:markers', () => [])
+  const activeMarkerId = useState<string | null>('dashboard:timeline:activeMarkerId', () => null)
+
+  const timelineBucket = computed<TimeseriesBucket>(() => granularity.value)
+  const drilldownBucket = computed<TimeseriesBucket>(() => (granularity.value === 'week' ? 'day' : 'hour'))
+
+  const timelineRange = computed(() => {
+    const to = nowRoundedToHour()
+    const fromBase = addDays(to, -364)
+    const from = granularity.value === 'week'
+      ? clampWeeklyFromWithinYear(startOfWeek(fromBase), to)
+      : startOfDay(fromBase)
+
+    return {
+      from: from.toISOString(),
+      to: to.toISOString()
+    }
   })
 
-  const setCustomBucket = (next: TimeseriesBucket) => {
-    customBucket.value = next
+  const selectedMarker = computed(() =>
+    markers.value.find(marker => marker.id === activeMarkerId.value) ?? null
+  )
+
+  const selectedBucketRange = computed(() => {
+    if (!selectedMarker.value) return null
+
+    const parsed = parseDate(selectedMarker.value.bucketStart)
+    if (!parsed) return null
+
+    const from = granularity.value === 'week' ? startOfWeek(parsed) : startOfDay(parsed)
+    const to = addDays(from, granularity.value === 'week' ? 7 : 1)
+
+    return {
+      from: from.toISOString(),
+      to: to.toISOString()
+    }
+  })
+
+  const selectedBucketLabel = computed(() => {
+    if (!selectedMarker.value) return ''
+    return granularityLabel(selectedMarker.value.bucketStart, granularity.value)
+  })
+
+  const setGranularity = (next: DashboardGranularity) => {
+    if (granularity.value === next) return
+    granularity.value = next
+
+    // Marker set is derived from timeline query data and should be re-synced.
+    markers.value = []
+    activeMarkerId.value = null
   }
 
-  const setCustomRangeFrom = (iso: string) => {
-    customRangeFrom.value = iso
-    normalizeCustomRange()
-    customBucket.value = undefined
+  const setTimelineBuckets = (bucketStarts: string[]) => {
+    const previousActiveMarkerId = activeMarkerId.value
+    const nextMarkers = Array.from(new Set(bucketStarts))
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      .map(bucketStart => ({
+        id: bucketStart,
+        bucketStart
+      }))
+
+    if (nextMarkers.length === 0) {
+      // Keep previous marker selection while queries transition.
+      return
+    }
+
+    markers.value = nextMarkers
+
+    if (previousActiveMarkerId && nextMarkers.some(marker => marker.id === previousActiveMarkerId)) {
+      return
+    }
+
+    const closestMarkerId = pickClosestMarkerId(previousActiveMarkerId, nextMarkers.map(marker => marker.id))
+    if (closestMarkerId) {
+      activeMarkerId.value = closestMarkerId
+      return
+    }
+
+    const latestMarker = nextMarkers[nextMarkers.length - 1]
+    if (!latestMarker) return
+    activeMarkerId.value = latestMarker.id
   }
 
-  const setCustomRangeTo = (iso: string) => {
-    customRangeTo.value = iso
-    normalizeCustomRange()
-    customBucket.value = undefined
+  const setActiveMarker = (markerId: string) => {
+    if (!markers.value.some(marker => marker.id === markerId)) return
+    activeMarkerId.value = markerId
   }
 
   return {
-    bucket,
-    canShiftForward,
-    customBucket,
-    period,
-    periodLabel,
-    rangeFrom,
-    rangeTo,
-    setCustomBucket,
-    setCustomRangeFrom,
-    setCustomRangeTo,
-    setPeriod,
-    shiftPeriod
+    activeMarkerId,
+    drilldownBucket,
+    granularity,
+    markers,
+    selectedBucketLabel,
+    selectedBucketRange,
+    setActiveMarker,
+    setGranularity,
+    setTimelineBuckets,
+    timelineBucket,
+    timelineRangeFrom: computed(() => timelineRange.value.from),
+    timelineRangeTo: computed(() => timelineRange.value.to),
+    selectedBucketRangeFrom: computed(() => selectedBucketRange.value?.from ?? null),
+    selectedBucketRangeTo: computed(() => selectedBucketRange.value?.to ?? null)
   }
 }

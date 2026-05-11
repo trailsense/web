@@ -94,6 +94,13 @@ export const NodeDtoSchema = {
         'created_at'
     ],
     properties: {
+        activation_count: {
+            type: [
+                'integer',
+                'null'
+            ],
+            format: 'int64'
+        },
         created_at: {
             type: 'string',
             format: 'date-time'
@@ -121,6 +128,53 @@ export const NodeDtoSchema = {
         },
         status: {
             $ref: '#/components/schemas/NodeStatus'
+        }
+    }
+} as const;
+
+export const NodeListQueryDtoSchema = {
+    type: 'object',
+    description: 'Node list query.\n\nOrdering rules:\n- when `date` + `bucket` are provided: `activation_count DESC`, then distance if `lat/lon` exist, then `id`\n- when only `lat/lon` are provided: distance ascending, then `id`\n- otherwise: `created_at DESC`, then `id`',
+    properties: {
+        bucket: {
+            oneOf: [
+                {
+                    type: 'null'
+                },
+                {
+                    $ref: '#/components/schemas/TimeseriesBucket',
+                    description: 'Optional aggregation bucket for single-bucket activation stats and activation-based ordering.\n\nMust be used together with `date`.'
+                }
+            ]
+        },
+        date: {
+            type: [
+                'string',
+                'null'
+            ],
+            format: 'date',
+            description: 'Optional date anchor for single-bucket activation stats and activation-based ordering.\n\nMust be used together with `bucket`. If omitted, no `activation_count` is returned.'
+        },
+        lat: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center latitude (WGS84 / EPSG:4326).'
+        },
+        limit: {
+            type: 'integer',
+            format: 'int64',
+            description: 'Hard cap for number of returned nodes. Defaults to 20.'
+        },
+        lon: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center longitude (WGS84 / EPSG:4326).'
         }
     }
 } as const;
@@ -211,6 +265,13 @@ export const TrailListItemDtoSchema = {
         'name'
     ],
     properties: {
+        activation_count: {
+            type: [
+                'integer',
+                'null'
+            ],
+            format: 'int64'
+        },
         geometry_geojson: {
             $ref: '#/components/schemas/GeoJsonMultiLineString'
         },
@@ -230,6 +291,164 @@ export const TrailListItemDtoSchema = {
                 'null'
             ],
             format: 'int64'
+        }
+    }
+} as const;
+
+export const TrailTimeseriesQueryDtoSchema = {
+    type: 'object',
+    required: [
+        'bucket',
+        'from',
+        'to'
+    ],
+    properties: {
+        bucket: {
+            $ref: '#/components/schemas/TimeseriesBucket',
+            description: 'Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.'
+        },
+        from: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range start (inclusive), must be earlier than `to`.'
+        },
+        to: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).'
+        },
+        tolerance_m: {
+            type: 'number',
+            format: 'double',
+            description: 'Distance threshold in meters from trail geometry. Defaults to 25m.'
+        }
+    }
+} as const;
+
+export const TrailsQueryDtoSchema = {
+    type: 'object',
+    description: 'Trail list query.\n\nOrdering rules:\n- when `date` + `bucket` are provided: `activation_count DESC`, then distance if `lat/lon` exist, then `id`\n- when only `lat/lon` are provided: distance ascending, then `id`\n- otherwise: `created_at DESC`, then `id`',
+    properties: {
+        bucket: {
+            oneOf: [
+                {
+                    type: 'null'
+                },
+                {
+                    $ref: '#/components/schemas/TimeseriesBucket',
+                    description: 'Optional aggregation bucket for single-bucket activation stats and activation-based ordering.\n\nMust be used together with `date`.'
+                }
+            ]
+        },
+        date: {
+            type: [
+                'string',
+                'null'
+            ],
+            format: 'date',
+            description: 'Optional date anchor for single-bucket activation stats and activation-based ordering.\n\nMust be used together with `bucket`. If omitted, no `activation_count` is returned.'
+        },
+        include_geo: {
+            type: 'boolean',
+            description: 'Include trail geometry/path in the response.'
+        },
+        lat: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center latitude (WGS84 / EPSG:4326).'
+        },
+        limit: {
+            type: 'integer',
+            format: 'int64',
+            description: 'Hard cap for number of returned trails. Defaults to 20.'
+        },
+        lon: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center longitude (WGS84 / EPSG:4326).'
+        }
+    }
+} as const;
+
+export const ViewportTrailTimeseriesQueryDtoSchema = {
+    type: 'object',
+    required: [
+        'bucket',
+        'from',
+        'to'
+    ],
+    properties: {
+        bucket: {
+            $ref: '#/components/schemas/TimeseriesBucket',
+            description: 'Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.'
+        },
+        from: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range start (inclusive), must be earlier than `to`.'
+        },
+        include_geo: {
+            type: 'boolean',
+            description: 'Include trail geometry/path in the returned trail list.'
+        },
+        lat: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center latitude (WGS84 / EPSG:4326). Must be provided together with `lon`.'
+        },
+        limit: {
+            type: 'integer',
+            format: 'int64',
+            description: 'Hard cap for number of selected trails. Defaults to 20.'
+        },
+        lon: {
+            type: [
+                'number',
+                'null'
+            ],
+            format: 'double',
+            description: 'Optional map center longitude (WGS84 / EPSG:4326). Must be provided together with `lat`.'
+        },
+        to: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).'
+        },
+        tolerance_m: {
+            type: 'number',
+            format: 'double',
+            description: 'Distance threshold in meters from trail geometry for per-trail averaging. Defaults to 25m.'
+        }
+    }
+} as const;
+
+export const ViewportTrailTimeseriesResponseDtoSchema = {
+    type: 'object',
+    required: [
+        'timeseries',
+        'trails'
+    ],
+    properties: {
+        timeseries: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/TimeseriesPointDto'
+            }
+        },
+        trails: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/TrailListItemDto'
+            }
         }
     }
 } as const;

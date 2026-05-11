@@ -33,6 +33,7 @@ export type IngestDto = {
 };
 
 export type NodeDto = {
+    activation_count?: number | null;
     created_at: string;
     id: string;
     latitude: number;
@@ -40,6 +41,36 @@ export type NodeDto = {
     name: string;
     send_frequency_seconds: number;
     status: NodeStatus;
+};
+
+/**
+ * Node list query.
+ *
+ * Ordering rules:
+ * - when `date` + `bucket` are provided: `activation_count DESC`, then distance if `lat/lon` exist, then `id`
+ * - when only `lat/lon` are provided: distance ascending, then `id`
+ * - otherwise: `created_at DESC`, then `id`
+ */
+export type NodeListQueryDto = {
+    bucket?: null | TimeseriesBucket;
+    /**
+     * Optional date anchor for single-bucket activation stats and activation-based ordering.
+     *
+     * Must be used together with `bucket`. If omitted, no `activation_count` is returned.
+     */
+    date?: string | null;
+    /**
+     * Optional map center latitude (WGS84 / EPSG:4326).
+     */
+    lat?: number | null;
+    /**
+     * Hard cap for number of returned nodes. Defaults to 20.
+     */
+    limit?: number;
+    /**
+     * Optional map center longitude (WGS84 / EPSG:4326).
+     */
+    lon?: number | null;
 };
 
 export type NodeStatus = 'pending' | 'online' | 'unstable' | 'offline';
@@ -63,6 +94,7 @@ export type TrailDetailDto = {
 };
 
 export type TrailListItemDto = {
+    activation_count?: number | null;
     geometry_geojson?: GeoJsonMultiLineString;
     id: string;
     name: string;
@@ -70,34 +102,131 @@ export type TrailListItemDto = {
     source_id?: number | null;
 };
 
+export type TrailTimeseriesQueryDto = {
+    /**
+     * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+     */
+    bucket: TimeseriesBucket;
+    /**
+     * Range start (inclusive), must be earlier than `to`.
+     */
+    from: string;
+    /**
+     * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+     */
+    to: string;
+    /**
+     * Distance threshold in meters from trail geometry. Defaults to 25m.
+     */
+    tolerance_m?: number;
+};
+
+/**
+ * Trail list query.
+ *
+ * Ordering rules:
+ * - when `date` + `bucket` are provided: `activation_count DESC`, then distance if `lat/lon` exist, then `id`
+ * - when only `lat/lon` are provided: distance ascending, then `id`
+ * - otherwise: `created_at DESC`, then `id`
+ */
+export type TrailsQueryDto = {
+    bucket?: null | TimeseriesBucket;
+    /**
+     * Optional date anchor for single-bucket activation stats and activation-based ordering.
+     *
+     * Must be used together with `bucket`. If omitted, no `activation_count` is returned.
+     */
+    date?: string | null;
+    /**
+     * Include trail geometry/path in the response.
+     */
+    include_geo?: boolean;
+    /**
+     * Optional map center latitude (WGS84 / EPSG:4326).
+     */
+    lat?: number | null;
+    /**
+     * Hard cap for number of returned trails. Defaults to 20.
+     */
+    limit?: number;
+    /**
+     * Optional map center longitude (WGS84 / EPSG:4326).
+     */
+    lon?: number | null;
+};
+
+export type ViewportTrailTimeseriesQueryDto = {
+    /**
+     * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+     */
+    bucket: TimeseriesBucket;
+    /**
+     * Range start (inclusive), must be earlier than `to`.
+     */
+    from: string;
+    /**
+     * Include trail geometry/path in the returned trail list.
+     */
+    include_geo?: boolean;
+    /**
+     * Optional map center latitude (WGS84 / EPSG:4326). Must be provided together with `lon`.
+     */
+    lat?: number | null;
+    /**
+     * Hard cap for number of selected trails. Defaults to 20.
+     */
+    limit?: number;
+    /**
+     * Optional map center longitude (WGS84 / EPSG:4326). Must be provided together with `lat`.
+     */
+    lon?: number | null;
+    /**
+     * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+     */
+    to: string;
+    /**
+     * Distance threshold in meters from trail geometry for per-trail averaging. Defaults to 25m.
+     */
+    tolerance_m?: number;
+};
+
+export type ViewportTrailTimeseriesResponseDto = {
+    timeseries: Array<TimeseriesPointDto>;
+    trails: Array<TrailListItemDto>;
+};
+
 export type ListTrailsData = {
     body?: never;
     path?: never;
     query?: {
         /**
-         * Optional bbox min longitude (WGS84 / EPSG:4326).
-         */
-        min_lon?: number;
-        /**
-         * Optional bbox min latitude (WGS84 / EPSG:4326).
-         */
-        min_lat?: number;
-        /**
-         * Optional bbox max longitude (WGS84 / EPSG:4326).
-         */
-        max_lon?: number;
-        /**
-         * Optional bbox max latitude (WGS84 / EPSG:4326).
-         */
-        max_lat?: number;
-        /**
-         * Include trail geometry/path in the response. Requires `bbox` to be set.
+         * Include trail geometry/path in the response.
          */
         include_geo?: boolean;
         /**
-         * Hard cap for number of returned trails. Defaults to 50.
+         * Optional map center latitude (WGS84 / EPSG:4326).
+         */
+        lat?: number;
+        /**
+         * Optional map center longitude (WGS84 / EPSG:4326).
+         */
+        lon?: number;
+        /**
+         * Hard cap for number of returned trails. Defaults to 20.
          */
         limit?: number;
+        /**
+         * Optional date anchor for single-bucket activation stats and activation-based ordering.
+         *
+         * Must be used together with `bucket`. If omitted, no `activation_count` is returned.
+         */
+        date?: string;
+        /**
+         * Optional aggregation bucket for single-bucket activation stats and activation-based ordering.
+         *
+         * Must be used together with `date`.
+         */
+        bucket?: TimeseriesBucket;
     };
     url: '/geo/trails';
 };
@@ -181,12 +310,13 @@ export type AddMeasurementResponse = AddMeasurementResponses[keyof AddMeasuremen
 
 export type MeasurementTimeseriesData = {
     body?: never;
-    path?: never;
-    query: {
+    path: {
         /**
-         * Node identifier to aggregate measurements for.
+         * Node ID
          */
         node_id: string;
+    };
+    query: {
         /**
          * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
          */
@@ -200,7 +330,7 @@ export type MeasurementTimeseriesData = {
          */
         to: string;
     };
-    url: '/measurements/timeseries';
+    url: '/measurements/nodes/{node_id}/timeseries';
 };
 
 export type MeasurementTimeseriesResponses = {
@@ -212,10 +342,122 @@ export type MeasurementTimeseriesResponses = {
 
 export type MeasurementTimeseriesResponse = MeasurementTimeseriesResponses[keyof MeasurementTimeseriesResponses];
 
+export type ViewportTrailMeasurementTimeseriesData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+         */
+        bucket: TimeseriesBucket;
+        /**
+         * Range start (inclusive), must be earlier than `to`.
+         */
+        from: string;
+        /**
+         * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+         */
+        to: string;
+        /**
+         * Optional map center latitude (WGS84 / EPSG:4326). Must be provided together with `lon`.
+         */
+        lat?: number;
+        /**
+         * Optional map center longitude (WGS84 / EPSG:4326). Must be provided together with `lat`.
+         */
+        lon?: number;
+        /**
+         * Include trail geometry/path in the returned trail list.
+         */
+        include_geo?: boolean;
+        /**
+         * Hard cap for number of selected trails. Defaults to 20.
+         */
+        limit?: number;
+        /**
+         * Distance threshold in meters from trail geometry for per-trail averaging. Defaults to 25m.
+         */
+        tolerance_m?: number;
+    };
+    url: '/measurements/trails/viewport/timeseries';
+};
+
+export type ViewportTrailMeasurementTimeseriesResponses = {
+    /**
+     * Center-based nearby trail list and aggregate measurement timeseries across returned trails
+     */
+    200: ViewportTrailTimeseriesResponseDto;
+};
+
+export type ViewportTrailMeasurementTimeseriesResponse = ViewportTrailMeasurementTimeseriesResponses[keyof ViewportTrailMeasurementTimeseriesResponses];
+
+export type TrailMeasurementTimeseriesData = {
+    body?: never;
+    path: {
+        /**
+         * Trail ID
+         */
+        trail_id: string;
+    };
+    query: {
+        /**
+         * Aggregation bucket. `hour` supports up to 31 days, `day` and `week` support up to 1 year.
+         */
+        bucket: TimeseriesBucket;
+        /**
+         * Range start (inclusive), must be earlier than `to`.
+         */
+        from: string;
+        /**
+         * Range end (exclusive); max range is 1 year (`day`/`week`) or 31 days (`hour`).
+         */
+        to: string;
+        /**
+         * Distance threshold in meters from trail geometry. Defaults to 25m.
+         */
+        tolerance_m?: number;
+    };
+    url: '/measurements/trails/{trail_id}/timeseries';
+};
+
+export type TrailMeasurementTimeseriesResponses = {
+    /**
+     * Rounded average measurement timeseries across nodes along a trail
+     */
+    200: Array<TimeseriesPointDto>;
+};
+
+export type TrailMeasurementTimeseriesResponse = TrailMeasurementTimeseriesResponses[keyof TrailMeasurementTimeseriesResponses];
+
 export type ListNodesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Optional map center latitude (WGS84 / EPSG:4326).
+         */
+        lat?: number;
+        /**
+         * Optional map center longitude (WGS84 / EPSG:4326).
+         */
+        lon?: number;
+        /**
+         * Hard cap for number of returned nodes. Defaults to 20.
+         */
+        limit?: number;
+        /**
+         * Optional date anchor for single-bucket activation stats and activation-based ordering.
+         *
+         * Must be used together with `bucket`. If omitted, no `activation_count` is returned.
+         */
+        date?: string;
+        /**
+         * Optional aggregation bucket for single-bucket activation stats and activation-based ordering.
+         *
+         * Must be used together with `date`.
+         */
+        bucket?: TimeseriesBucket;
+    };
     url: '/nodes';
 };
 

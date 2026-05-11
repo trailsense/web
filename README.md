@@ -34,6 +34,31 @@ npm preview
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
 
+## Production compose locally (plain Docker Compose)
+
+`compose.yaml` can stay focused on local defaults.
+To run the production stack locally with a host port mapping, use the explicit local override file:
+
+```sh
+docker compose \
+  -f compose.production.yaml \
+  -f compose.production.local.yaml \
+  --env-file .env.production \
+  up -d
+```
+
+This publishes the web app at `http://localhost:3000`.
+
+Stop the local production stack:
+
+```sh
+docker compose \
+  -f compose.production.yaml \
+  -f compose.production.local.yaml \
+  --env-file .env.production \
+  down
+```
+
 ## Uncloud
 
 1. Copy `.env.production.example` to `.env.production` and fill values.
