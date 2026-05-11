@@ -61,7 +61,7 @@
               <div class="min-w-0 flex-1">
                 <OrganizationSwitcher />
               </div>
-              <UserButton />
+              <UserButton after-sign-out-url="/login" />
             </div>
           </SignedIn>
           <SignedOut>

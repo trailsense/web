@@ -70,6 +70,8 @@ mise run deploy
 
 Notes:
 - `NUXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is the only Clerk key needed for this client-side build.
+- `NUXT_PUBLIC_CLERK_SIGN_IN_URL` and `NUXT_PUBLIC_CLERK_SIGN_UP_URL` should point to the local auth pages (`/login` and `/signup` by default). Configure the same paths in Clerk when using hosted links or Account Portal redirects.
+- `NUXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` and `NUXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` default to `/`; set them when users should land somewhere else after direct login or registration.
 - `NUXT_PUBLIC_API_BASE_URL` can override the backend base URL used by the generated API client.
 - `NUXT_PUBLIC_CLERK_JWT_TEMPLATE` can be set to request a Clerk JWT template for backend auth (use this when your API requires claims like `aud`).
 - `EXPOSE 3000` in the Dockerfile is documentation; runtime port comes from `NITRO_PORT`.
