@@ -33,7 +33,18 @@
         class="flex min-h-0 flex-1 flex-col"
       >
         <div class="px-4 pt-2">
+          <UButton
+            v-if="isLegalPage"
+            block
+            color="neutral"
+            icon="i-lucide-arrow-left"
+            variant="soft"
+            to="/"
+          >
+            Back to map
+          </UButton>
           <UTabs
+            v-else
             v-model="viewMode"
             :content="false"
             :items="viewItems"
@@ -67,11 +78,26 @@
           <SignedOut>
             <RedirectToSignIn />
           </SignedOut>
+          <div class="mt-3 flex items-center justify-between gap-4">
+            <NuxtLink
+              to="/imprint"
+              class="font-body-tiny text-muted transition-colors hover:text-highlighted"
+            >
+              Imprint
+            </NuxtLink>
+            <NuxtLink
+              to="/privacy-policy"
+              class="font-body-tiny text-muted transition-colors hover:text-highlighted"
+            >
+              Privacy Policy
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </aside>
 
     <div
+      v-if="!isLegalPage"
       class="absolute bottom-(--layout-gap) left-(--layout-gap) right-(--layout-gap) z-46"
       :class="!isSidebarCollapsed ? 'lg:left-[calc(var(--layout-gap)+var(--sidebar-width)+var(--layout-gap))]' : ''"
     >
@@ -103,7 +129,9 @@
 </template>
 
 <script lang="ts" setup>
+const route = useRoute()
 const isSidebarCollapsed = ref(false)
+const isLegalPage = computed(() => ['/imprint', '/privacy-policy'].includes(route.path))
 
 const viewMode = useState<'nodes' | 'trails'>('dashboard:viewMode', () => 'nodes')
 
