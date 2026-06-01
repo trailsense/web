@@ -59,7 +59,7 @@ useSeoMeta({
               </h2>
 
               <p>
-                Email: contact@trailsense-project.com
+                Email: servus@trailsense.at
               </p>
 
               <p>

@@ -122,7 +122,7 @@ useSeoMeta({
                 If you have questions regarding this privacy policy or the processing of personal data, please contact us at:
               </p>
               <p>
-                contact@trailsense-project.com
+                servus@trailsense.at
               </p>
             </div>
 
