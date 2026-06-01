@@ -1,6 +1,6 @@
 <template>
-  <div class="py-2">
-    <p class="px-4 pb-4 font-body-small text-muted">
+  <div class="py-1 lg:py-2">
+    <p class="px-3 pb-2 text-xs text-muted lg:px-4 lg:pb-4 lg:font-body-small">
       Available Nodes
     </p>
 
@@ -43,7 +43,7 @@
 
     <div
       v-else
-      class="space-y-3"
+      class="space-y-2 lg:space-y-3"
     >
       <SidebarListCard
         v-for="node in nodes"
