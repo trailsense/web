@@ -38,7 +38,7 @@
       />
     </mgl-geo-json-source>
 
-    <MglNavigationControl />
+    <MglNavigationControl :position="navigationControlPosition" />
   </MglMap>
 </template>
 
@@ -68,12 +68,16 @@ const dashboard = inject<TrailDashboardState>(TRAIL_DASHBOARD_KEY)
 
 const mapRef = ref<{ map: MapLibreMap } | null>(null)
 const hoveredTrailId = ref<string | null>(null)
+const isMobileMapControls = ref(false)
 
 const style = '/map/style.json'
 const center: [number, number] = dashboard
   ? [dashboard.mapCenter.value.lon, dashboard.mapCenter.value.lat]
   : [11.393, 47.287]
 const zoom = 13
+const navigationControlPosition = computed(() =>
+  isMobileMapControls.value ? 'bottom-left' : 'top-right'
+)
 const CENTER_SYNC_EPSILON = 0.000001
 const CAMERA_MARGIN = 24
 const EDGE_PROXIMITY = 28
@@ -314,6 +318,70 @@ const onMapLoad = () => {
   })
 }
 
+onMounted(() => {
+  const mobileQuery = window.matchMedia('(max-width: 767px)')
+
+  let bottomCardObserver: ResizeObserver | null = null
+
+  const updateNavControlOffset = () => {
+    // ensure we only modify on mobile layout
+    const controlEl = document.querySelector<HTMLElement>('.maplibregl-ctrl-bottom-left')
+    if (!controlEl) return
+
+    if (mobileQuery.matches) {
+      const bottomCardEl = document.querySelector<HTMLElement>('[data-map-overlay="bottom-card"]')
+      if (bottomCardEl) {
+        const rect = bottomCardEl.getBoundingClientRect()
+        const distanceFromBottom = Math.max(0, window.innerHeight - rect.top)
+        const gap = 12
+        controlEl.style.bottom = `${distanceFromBottom + gap}px`
+        controlEl.style.left = '1rem'
+        controlEl.style.right = 'auto'
+      } else {
+        // fallback offset above typical card height
+        controlEl.style.bottom = '5.75rem'
+        controlEl.style.left = '1rem'
+        controlEl.style.right = 'auto'
+      }
+    } else {
+      // reset any inline adjustments on desktop
+      controlEl.style.bottom = ''
+      controlEl.style.left = ''
+      controlEl.style.right = ''
+    }
+  }
+
+  const syncNavigationControlPosition = () => {
+    isMobileMapControls.value = mobileQuery.matches
+    // delay once to allow control to render into DOM
+    setTimeout(updateNavControlOffset, 40)
+  }
+
+  syncNavigationControlPosition()
+  mobileQuery.addEventListener('change', syncNavigationControlPosition)
+  window.addEventListener('resize', updateNavControlOffset)
+
+  // Observe bottom card size/position changes so control offset updates
+  const bottomCardEl = document.querySelector<HTMLElement>('[data-map-overlay="bottom-card"]')
+  if (bottomCardEl && typeof ResizeObserver !== 'undefined') {
+    bottomCardObserver = new ResizeObserver(updateNavControlOffset)
+    bottomCardObserver.observe(bottomCardEl)
+  }
+
+  onBeforeUnmount(() => {
+    mobileQuery.removeEventListener('change', syncNavigationControlPosition)
+    window.removeEventListener('resize', updateNavControlOffset)
+    if (bottomCardObserver) bottomCardObserver.disconnect()
+    // ensure we reset inline styles for cleanliness
+    const controlEl = document.querySelector<HTMLElement>('.maplibregl-ctrl-bottom-left')
+    if (controlEl) {
+      controlEl.style.bottom = ''
+      controlEl.style.left = ''
+      controlEl.style.right = ''
+    }
+  })
+})
+
 watch(
   () => props.selectedNode?.id ?? null,
   (nodeId, previousNodeId) => {
@@ -364,6 +432,35 @@ watch(
 </script>
 
 <style scoped>
+:deep(.maplibregl-ctrl-top-right),
+:deep(.maplibregl-ctrl-bottom-right),
+:deep(.maplibregl-ctrl-top-left),
+:deep(.maplibregl-ctrl-bottom-left) {
+  transition:
+    left 180ms ease,
+    right 180ms ease,
+    top 180ms ease,
+    bottom 180ms ease;
+}
+
+@media (max-width: 767px) {
+  :deep(.maplibregl-ctrl-bottom-left) {
+    left: 1rem;
+    right: auto;
+    bottom: calc(5.75rem + env(safe-area-inset-bottom));
+    top: auto;
+  }
+
+  :deep(.maplibregl-ctrl-top-right),
+  :deep(.maplibregl-ctrl-top-left),
+  :deep(.maplibregl-ctrl-bottom-right) {
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+  }
+}
+
 .pin {
   position: relative;
   width: 14px;
