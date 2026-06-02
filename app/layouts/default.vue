@@ -33,7 +33,18 @@
         class="flex min-h-0 flex-1 flex-col"
       >
         <div class="px-4 pt-2">
+          <UButton
+            v-if="isLegalPage"
+            block
+            color="neutral"
+            icon="i-lucide-arrow-left"
+            variant="soft"
+            to="/"
+          >
+            Back to map
+          </UButton>
           <UTabs
+            v-else
             v-model="viewMode"
             :content="false"
             :items="viewItems"
@@ -61,7 +72,26 @@
               <div class="min-w-0 flex-1">
                 <OrganizationSwitcher />
               </div>
-              <UserButton />
+              <UserButton>
+                <UserButton.MenuItems>
+                  <UserButton.Link
+                    href="/imprint"
+                    label="Imprint"
+                  >
+                    <template #labelIcon>
+                      <UIcon name="i-lucide-file-text" />
+                    </template>
+                  </UserButton.Link>
+                  <UserButton.Link
+                    href="/privacy-policy"
+                    label="Privacy Policy"
+                  >
+                    <template #labelIcon>
+                      <UIcon name="i-lucide-shield-check" />
+                    </template>
+                  </UserButton.Link>
+                </UserButton.MenuItems>
+              </UserButton>
             </div>
           </SignedIn>
           <SignedOut>
@@ -72,6 +102,7 @@
     </aside>
 
     <div
+      v-if="!isLegalPage"
       class="absolute bottom-(--layout-gap) left-(--layout-gap) right-(--layout-gap) z-46"
       :class="!isSidebarCollapsed ? 'lg:left-[calc(var(--layout-gap)+var(--sidebar-width)+var(--layout-gap))]' : ''"
     >
@@ -103,7 +134,11 @@
 </template>
 
 <script lang="ts" setup>
+import { UserButton } from '@clerk/nuxt/components'
+
+const route = useRoute()
 const isSidebarCollapsed = ref(false)
+const isLegalPage = computed(() => ['/imprint', '/privacy-policy'].includes(route.path))
 
 const viewMode = useState<'nodes' | 'trails'>('dashboard:viewMode', () => 'nodes')
 
