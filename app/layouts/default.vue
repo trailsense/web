@@ -72,26 +72,31 @@
               <div class="min-w-0 flex-1">
                 <OrganizationSwitcher />
               </div>
-              <UserButton />
+              <UserButton>
+                <UserButton.MenuItems>
+                  <UserButton.Link
+                    href="/imprint"
+                    label="Imprint"
+                  >
+                    <template #labelIcon>
+                      <UIcon name="i-lucide-file-text" />
+                    </template>
+                  </UserButton.Link>
+                  <UserButton.Link
+                    href="/privacy-policy"
+                    label="Privacy Policy"
+                  >
+                    <template #labelIcon>
+                      <UIcon name="i-lucide-shield-check" />
+                    </template>
+                  </UserButton.Link>
+                </UserButton.MenuItems>
+              </UserButton>
             </div>
           </SignedIn>
           <SignedOut>
             <RedirectToSignIn />
           </SignedOut>
-          <div class="mt-3 flex items-center justify-between gap-4">
-            <NuxtLink
-              to="/imprint"
-              class="font-body-tiny text-muted transition-colors hover:text-highlighted"
-            >
-              Imprint
-            </NuxtLink>
-            <NuxtLink
-              to="/privacy-policy"
-              class="font-body-tiny text-muted transition-colors hover:text-highlighted"
-            >
-              Privacy Policy
-            </NuxtLink>
-          </div>
         </div>
       </div>
     </aside>
@@ -129,6 +134,8 @@
 </template>
 
 <script lang="ts" setup>
+import { UserButton } from '@clerk/nuxt/components'
+
 const route = useRoute()
 const isSidebarCollapsed = ref(false)
 const isLegalPage = computed(() => ['/imprint', '/privacy-policy'].includes(route.path))
