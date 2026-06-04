@@ -1,6 +1,0 @@
-services:
-  trailsense-web-app:
-    ports:
-      - "3000:3000"
-    deploy:
-      replicas: 1
