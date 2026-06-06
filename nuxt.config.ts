@@ -24,7 +24,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBaseUrl: 'https://api.trailsense.daugt.com',
+      apiBaseUrl: 'https://api.trailsense.at',
       clerkJwtTemplate: undefined
     }
   },

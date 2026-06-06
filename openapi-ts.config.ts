@@ -1,7 +1,7 @@
 import { defineConfig } from '@hey-api/openapi-ts'
 
 export default defineConfig({
-  input: 'https://api.trailsense.daugt.com/docs/openapi.json',
+  input: 'https://api.trailsense.at/docs/openapi.json',
   output: 'app/lib/api',
   plugins: [
     '@hey-api/typescript',
